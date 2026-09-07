@@ -56,14 +56,7 @@ wordclock/
 │   ├── opcion_1_tapa_superpuesta/         # Option 1: External overlaid back lid for standard frame
 │   └── opcion_2_tapa_incrustada_al_ras/   # Option 2: Flush-mount embedded lid for optimized frame
 │
-└── backups/                               # Consolidated backups and historical iterations
-    ├── simulator/                         # Legacy versions of the web simulator
-    ├── scad_188x240_pre_optimized/        # Early 188x240 mm OpenSCAD designs
-    ├── scad_perfect/                      # Intermediate OpenSCAD iterations
-    ├── scad_backup_flush_lid/             # Previous flush-lid OpenSCAD designs
-    ├── version_1_superpuesta_no_al_ras/   # Early non-flush back lid model
-    ├── version_2_incrustada_al_ras/       # Early flush-mount model
-    └── root_legacy_3d/                    # Historical 3D files originally located in root
+└── LICENSE                                # Dual license (MIT for software, CC BY-SA 4.0 for hardware/3D)
 ```
 
 ---
@@ -121,3 +114,11 @@ Open `simulator/index.html` directly in any modern web browser to test word illu
 
 ### 3. 3D Printing
 All parametric OpenSCAD sources and exported `.stl` / `.3mf` files are located in `3d_models/`. Check `3d_models/best_parameters.txt` for recommended layer heights, line widths, and infill patterns.
+
+---
+
+## License
+
+This project is licensed under a dual-licensing scheme:
+* **Software and Firmware (`arduino/`, `simulator/`)**: [MIT License](LICENSE).
+* **3D Models, Hardware and Documentation (`3d_models/`, `docs/`)**: [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](LICENSE).

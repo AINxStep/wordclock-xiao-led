@@ -56,14 +56,7 @@ wordclock/
 │   ├── opcion_1_tapa_superpuesta/         # Opción 1: Tapa exterior superpuesta para marco estándar
 │   └── opcion_2_tapa_incrustada_al_ras/   # Opción 2: Tapa incrustada al ras para marco optimizado
 │
-└── backups/                               # Concentrador unificado de respaldos y versiones históricas
-    ├── simulator/                         # Respaldos de versiones anteriores del simulador
-    ├── scad_188x240_pre_optimized/        # Diseños preliminares SCAD 188x240 mm
-    ├── scad_perfect/                      # Diseños intermedios SCAD
-    ├── scad_backup_flush_lid/             # Diseños previos con tapa al ras
-    ├── version_1_superpuesta_no_al_ras/   # Versión inicial no al ras
-    ├── version_2_incrustada_al_ras/       # Versión inicial incrustada
-    └── root_legacy_3d/                    # Archivos 3D preliminares de raíz
+└── LICENSE                                # Licencia dual (MIT para software, CC BY-SA 4.0 para hardware/3D)
 ```
 
 ---
@@ -121,3 +114,11 @@ Abre directamente `simulator/index.html` en cualquier navegador web moderno para
 
 ### 3. Impresión 3D
 Dentro de `3d_models/` encontrarás los modelos OpenSCAD paramétricos y los archivos `.stl` / `.3mf` listos para rebanar. Consulta `3d_models/best_parameters.txt` para los ajustes de capa, ancho de línea y patrones de relleno recomendados.
+
+---
+
+## Licencia
+
+Este proyecto cuenta con un esquema de licenciamiento dual:
+* **Software y Firmware (`arduino/`, `simulator/`)**: Licencia [MIT](LICENSE).
+* **Modelos 3D, Hardware y Documentación (`3d_models/`, `docs/`)**: Licencia [Creative Commons Atribución-CompartirIgual 4.0 Internacional (CC BY-SA 4.0)](LICENSE).
