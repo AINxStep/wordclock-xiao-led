@@ -7,6 +7,12 @@
 
 🌐 **Idioma / Language:** [Español](README.md) | **English**
 
+<p align="center">
+  <img src="docs/images/wordclock-front.jpg" alt="Mexican Spanish Word Clock - Physical Build" width="460">
+  <br>
+  <em>Physical WordClock running in Mexican Spanish showing 1:37 («SON VEINTICINCO PARA LAS DOS» + 2 minute dots)</em>
+</p>
+
 ---
 
 Complete project featuring hardware, firmware, 3D printable models, and an interactive web simulator for a Word Clock (*WordClock*) **specifically regionalized for Mexican Spanish** (as spoken colloquially throughout Central Mexico), driven by an addressable 158-LED WS2812B matrix with WiFi AP configuration and RTC timekeeping.
@@ -38,8 +44,10 @@ The repository is organized into modular directories for clean navigation and ma
 
 ```text
 wordclock/
-├── docs/                                  # Technical specifications and LED matrix layout
-│   ├── matrix-layout.txt                  # Detailed physical mapping for all 158 LEDs (progressive wiring)
+├── docs/                                  # Technical specifications, diagrams, and assets
+│   ├── images/                            # Photographs of the assembled physical clock
+│   │   └── wordclock-front.jpg
+│   ├── matrix-layout.txt                  # Physical progressive LED indexing layout (158 LEDs)
 │   └── matrix-grid.txt                    # Letter grid distribution (11x14)
 │
 ├── simulator/                             # Interactive Web Simulator

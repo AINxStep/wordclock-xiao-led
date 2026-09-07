@@ -7,6 +7,12 @@
 
 🌐 **Idioma / Language:** **Español** | [English](README.en.md)
 
+<p align="center">
+  <img src="docs/images/wordclock-front.jpg" alt="Reloj de Palabras - WordClock Español Mexicano" width="460">
+  <br>
+  <em>WordClock en funcionamiento físico mostrando las 1:37 («SON VEINTICINCO PARA LAS DOS» + 2 minutos)</em>
+</p>
+
 ---
 
 Proyecto completo de hardware, firmware, modelos 3D y simulador web para un reloj de palabras (*WordClock*) **regionalizado para el español de México** (particularmente el centro del país), con matriz de 158 LEDs direccionables WS2812B y sincronización WiFi / RTC.
@@ -38,7 +44,9 @@ El repositorio está organizado en módulos independientes para facilitar la nav
 
 ```text
 wordclock/
-├── docs/                                  # Especificaciones técnicas y esquemas de la matriz
+├── docs/                                  # Especificaciones técnicas, esquemas y recursos
+│   ├── images/                            # Fotografías del proyecto físico ensamblado
+│   │   └── wordclock-front.jpg
 │   ├── matrix-layout.txt                  # Mapeo físico detallado de los 158 LEDs (cableado progresivo)
 │   └── matrix-grid.txt                    # Distribución de la cuadrícula de texto (11x14)
 │
