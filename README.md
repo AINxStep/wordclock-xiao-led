@@ -74,7 +74,75 @@ wordclock/
 * **Pines Principales**:
   * Pin de datos LEDs: `D0` / `GPIO 0`
   * LED integrado (estado AP): `GPIO 15`
-  * Bus I2C: Pines Grove SDA/SCL
+  * Bus I2C: Pines Grove SDA/SCL (`D4` / `D5`)
+
+### Diagrama de Conexiones
+
+```mermaid
+flowchart TD
+    subgraph PWR["Fuente de Alimentación (5V / 2A - 3A)"]
+        V5["+5V"]
+        GND_PWR["GND"]
+    end
+
+    subgraph MCU["Seeed Studio XIAO ESP32-C6"]
+        GPIO0["D0 / GPIO 0 (Data Out 3.3V)"]
+        SDA["D4 / SDA"]
+        SCL["D5 / SCL"]
+        VCC_MCU["5V IN"]
+        GND_MCU["GND"]
+    end
+
+    subgraph LevelShifter["Seeed LED Driver Board (Level Shifter)"]
+        DIN_LV["Data In (3.3V)"]
+        DOUT_HV["Data Out (5V)"]
+        VCC_LS["5V"]
+        GND_LS["GND"]
+    end
+
+    subgraph RTC["Grove RTC (DS1307)"]
+        RTC_SDA["SDA"]
+        RTC_SCL["SCL"]
+        RTC_VCC["VCC"]
+        RTC_GND["GND"]
+    end
+
+    subgraph Matriz["Matriz LEDs WS2812B (158 LEDs)"]
+        DIN_LED["DIN (LED #0)"]
+        VCC_LED["+5V"]
+        GND_LED["GND"]
+    end
+
+    V5 --> VCC_MCU
+    V5 --> VCC_LS
+    V5 --> RTC_VCC
+    V5 --> VCC_LED
+
+    GND_PWR --> GND_MCU
+    GND_PWR --> GND_LS
+    GND_PWR --> RTC_GND
+    GND_PWR --> GND_LED
+
+    GPIO0 --> DIN_LV
+    DOUT_HV --> DIN_LED
+
+    SDA <--> RTC_SDA
+    SCL --> RTC_SCL
+```
+
+### Tabla de Cableado
+
+| Componente Origen | Pin Origen | Componente Destino | Pin Destino | Función / Descripción |
+| :--- | :--- | :--- | :--- | :--- |
+| **XIAO ESP32-C6** | `D0` (`GPIO 0`) | **LED Driver Board** | `DIN (3.3V)` | Señal digital FastLED |
+| **LED Driver Board** | `DOUT (5V)` | **Matriz WS2812B** | `DIN` (LED #0) | Datos con nivel elevado a 5V |
+| **XIAO ESP32-C6** | `D4` (`SDA`) | **Grove RTC DS1307** | `SDA` | Bus I2C Datos (100 kHz) |
+| **XIAO ESP32-C6** | `D5` (`SCL`) | **Grove RTC DS1307** | `SCL` | Bus I2C Reloj |
+| **Fuente 5V** | `+5V` | **Todos** | `5V` / `VCC` | Línea de alimentación positiva común |
+| **Fuente 5V** | `GND` | **Todos** | `GND` | Línea de tierra común |
+
+> [!TIP]
+> **Alimentación recomendada**: Se recomienda una fuente regulada de **5V a 2A o 3A**. Aunque en operación normal solo se iluminan las palabras de la hora activa (consumo típico < 1A), este margen previene caídas de voltaje y reinicios espontáneos del ESP32-C6.
 
 ---
 
