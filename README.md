@@ -1,5 +1,9 @@
 # Reloj de Palabras (WordClock) - Seeed Studio XIAO ESP32-C6
 
+🌐 **Idioma / Language:** **Español** | [English](README.en.md)
+
+---
+
 Proyecto completo de hardware, firmware, modelos 3D y simulador web para un reloj de palabras (*WordClock*) en español, con matriz de 158 LEDs direccionables WS2812B y control WiFi / RTC.
 
 ---
