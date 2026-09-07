@@ -45,9 +45,10 @@ El repositorio está organizado en módulos independientes para facilitar la nav
 ```text
 wordclock/
 ├── docs/                                  # Especificaciones técnicas, esquemas y recursos
-│   ├── images/                            # Fotografías del proyecto físico ensamblado
+│   ├── images/                            # Fotografías y renders del proyecto
 │   │   ├── wordclock-front.jpg            # Vista frontal en funcionamiento
-│   │   └── wordclock-internals.jpg        # Ensamble interior y electrónica
+│   │   ├── wordclock-internals.jpg        # Ensamble interior y electrónica
+│   │   └── wordclock-angle.jpg            # Despiece del ensamble 3D en CAD
 │   ├── matrix-layout.txt                  # Mapeo físico detallado de los 158 LEDs (cableado progresivo)
 │   └── matrix-grid.txt                    # Distribución de la cuadrícula de texto (11x14)
 │
@@ -198,8 +199,21 @@ Fila 14 (154-157): Puntos de minutos (+1, +2, +3, +4)
 4. Selecciona la placa **Seeed Studio XIAO ESP32C6** y el puerto correspondiente.
 5. Compila y carga el código.
 
-### 3. Impresión 3D
-Dentro de `3d_models/` encontrarás los modelos OpenSCAD paramétricos y los archivos `.stl` / `.3mf` listos para rebanar. Consulta `3d_models/best_parameters.txt` para los ajustes de capa, ancho de línea y patrones de relleno recomendados.
+### 3. Impresión 3D y Ensamble
+
+<p align="center">
+  <img src="docs/images/wordclock-angle.jpg" alt="Despiece y ensamble 3D de WordClock" width="650">
+  <br>
+  <em>Despiece del ensamble 3D: Marco frontal con rejilla de aislamiento óptico, placa porta-LEDs, soporte de electrónica y tapa trasera ventilada</em>
+</p>
+
+Dentro de `3d_models/` se encuentran los modelos paramétricos en OpenSCAD y los archivos `.stl` / `.3mf` listos para laminar:
+* **Marco principal (`wordclock_main_frame`)**: Frontal con celdas individuales para cada letra y punto de minuto, diseñadas para aislar completamente la luz de cada LED (*anti-light-bleed*).
+* **Placa de LEDs (`wordclock_led_plate`)**: Base con ranuras y marcas para el pegado y alineación milimétrica de las tiras WS2812B.
+* **Soporte de electrónica (`wordclock_electronics_mount`)**: Base adaptada para fijar con tornillos la placa Seeed LED Driver y el módulo RTC.
+* **Tapa trasera (`wordclock_back_lid`)**: Disponible en dos opciones: **Opción 1** (tapa superpuesta estándar) y **Opción 2** (tapa incrustada al ras), ambas con ranuras para ventilación pasiva.
+
+Consulta `3d_models/best_parameters.txt` para los ajustes de capa, ancho de línea y patrones de relleno recomendados en Bambu Studio.
 
 ---
 

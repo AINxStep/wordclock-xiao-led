@@ -45,9 +45,10 @@ The repository is organized into modular directories for clean navigation and ma
 ```text
 wordclock/
 ├── docs/                                  # Technical specifications, diagrams, and assets
-│   ├── images/                            # Photographs of the assembled physical clock
+│   ├── images/                            # Photographs and project renders
 │   │   ├── wordclock-front.jpg            # Front view in operation
-│   │   └── wordclock-internals.jpg        # Internal assembly and electronics
+│   │   ├── wordclock-internals.jpg        # Internal assembly and electronics
+│   │   └── wordclock-angle.jpg            # Exploded 3D CAD assembly render
 │   ├── matrix-layout.txt                  # Physical progressive LED indexing layout (158 LEDs)
 │   └── matrix-grid.txt                    # Letter grid distribution (11x14)
 │
@@ -197,8 +198,21 @@ Row 14 (154-157): Minute Dots (+1, +2, +3, +4)
 4. Select board **Seeed Studio XIAO ESP32C6** and your USB serial port.
 5. Compile and upload.
 
-### 3. 3D Printing
-All parametric OpenSCAD sources and exported `.stl` / `.3mf` files are located in `3d_models/`. Check `3d_models/best_parameters.txt` for recommended layer heights, line widths, and infill patterns.
+### 3. 3D Printing and Assembly
+
+<p align="center">
+  <img src="docs/images/wordclock-angle.jpg" alt="Exploded 3D CAD assembly of WordClock" width="650">
+  <br>
+  <em>Exploded 3D CAD assembly view: Main front bezel with optical isolation baffles, LED carrier plate, electronics mounting frame, and ventilated rear lid</em>
+</p>
+
+Within `3d_models/`, you will find both parametric OpenSCAD scripts and ready-to-slice `.stl` / `.3mf` files:
+* **Main front bezel (`wordclock_main_frame`)**: Front faceplate featuring individually walled letter cavities and minute dots designed to eliminate light bleeding across adjacent letters.
+* **LED carrier plate (`wordclock_led_plate`)**: Grid plate with alignment guides for placing and securing the 14 WS2812B LED strip segments.
+* **Electronics bracket (`wordclock_electronics_mount`)**: Dedicated chassis bracket to fasten the Seeed LED Driver Board and RTC module.
+* **Rear back lid (`wordclock_back_lid`)**: Available in two variants: **Option 1** (overlaid back lid) and **Option 2** (flush-mount embedded lid), both equipped with passive heat dissipation louvers.
+
+Refer to `3d_models/best_parameters.txt` for recommended layer heights, line widths, and infill profiles in Bambu Studio.
 
 ---
 
