@@ -39,21 +39,21 @@ Preferences prefs;
 
 const byte DNS_PORT = 53;
 
-/* ========== Defaults ========== */
+/* ========== Valores por Defecto ========== */
 const uint8_t DEFAULT_DAY_BRI_PERCENT = 70;
 const uint8_t DEFAULT_NIGHT_BRI_PERCENT = 20;
 const uint8_t DEFAULT_NIGHT_START = 22;
 const uint8_t DEFAULT_NIGHT_END = 6;
 const CRGB DEFAULT_COLOR = CRGB(255, 140, 0); // Ámbar por defecto (#ff8c00)
 
-/* ========== Settings (Runtime) ========== */
+/* ========== Configuración en Tiempo de Ejecución ========== */
 uint8_t dayBrightPercent = DEFAULT_DAY_BRI_PERCENT;
 uint8_t nightBrightPercent = DEFAULT_NIGHT_BRI_PERCENT;
 uint8_t nightStartHour = DEFAULT_NIGHT_START;
 uint8_t nightEndHour = DEFAULT_NIGHT_END;
 CRGB WORD_COLOR = DEFAULT_COLOR;
 
-/* Preference keys */
+/* Claves para Preferences (memoria no volátil) */
 const char *P_NS = "nightStart";
 const char *P_NE = "nightEnd";
 const char *P_DB = "dayB";
@@ -62,12 +62,12 @@ const char *P_R = "rc";
 const char *P_G = "gc";
 const char *P_B = "bc";
 
-/* ========== WIFI / AP Configuration Status ========== */
+/* ========== Estado de Configuración WiFi / Modo AP ========== */
 bool apActive = false;
 bool clientConnected = false;
 unsigned long apStartTime = 0;
 
-/* Pulsing Variables */
+/* Variables para el efecto de pulsación */
 int pulseValue = 10;
 int pulseDir = 6;
 
@@ -78,12 +78,12 @@ bool builtinLedState = false;
 /* Variable global de seguimiento de minutos */
 uint8_t lastMinute = 255;
 
-/* Status LED indices for the word "WIFI" (end of Row 4: 51, 52, 53, 54) */
+/* Índices LED de estado para la palabra "WIFI" (final de la Fila 4: 51, 52, 53, 54) */
 const uint8_t WIFI_LEDS[4] = { 51, 52, 53, 54 };
 
-/* ========== DEBUG ========== */
-#define DEBUG_SERIAL 1   // Set to 0 to disable serial prints
-String debugWords = "";  // Reconstructed in each buildTimeTarget()
+/* ========== DEPURACIÓN ========== */
+#define DEBUG_SERIAL 1   // Cambiar a 0 para deshabilitar mensajes por el puerto serial
+String debugWords = "";  // Reconstruido en cada llamada a buildTimeTarget()
 
 inline void logW(const char *name) {
 #if DEBUG_SERIAL
@@ -92,15 +92,15 @@ inline void logW(const char *name) {
 #endif
 }
 
-/* ========== Word Mappings (11x14 Matrix Grid) ========== */
-// Verbs / Articles / Hour "uno" (Row 0)
+/* ========== Mapeo de Palabras (Matriz 11x14) ========== */
+// Verbos / Artículos / Hora "una" (Fila 0)
 const uint8_t ES[] = {0, 1};
 const uint8_t SON[] = {1, 2, 3};
 const uint8_t LA[] = {5, 6};
 const uint8_t LAS[] = {5, 6, 7};
 const uint8_t UNA[] = {8, 9, 10};
 
-// Minutes for "PARA" (Rows 1, 2, 3 - Zig-Zag serpentina)
+// Minutos para bloque "PARA" (Filas 1, 2, 3 - Zig-zag serpentina)
 const uint8_t VEINTICINCO_PARA[] = {21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11};
 const uint8_t CINCO_PARA[] = {15, 14, 13, 12, 11};
 const uint8_t DIEZ_PARA[] = {22, 23, 24, 25};
@@ -108,12 +108,12 @@ const uint8_t VEINTE_PARA[] = {26, 27, 28, 29, 30, 31};
 const uint8_t CUARTO_PARA[] = {43, 42, 41, 40, 39, 38};
 const uint8_t PARA[] = {36, 35, 34, 33};
 
-// Articles for "PARA" (Row 4 - Par L->R)
+// Artículos para bloque "PARA" (Fila 4 - Par L->R)
 const uint8_t LA_PARA[] = {44, 45};
 const uint8_t LAS_PARA[] = {44, 45, 46};
 const uint8_t UNA_PARA[] = {47, 48, 49};
 
-// Hours (Rows 5 to 10)
+// Horas (Filas 5 a 10)
 const uint8_t TRES[] = {65, 64, 63, 62};
 const uint8_t DOS[] = {57, 56, 55};
 const uint8_t CUATRO[] = {66, 67, 68, 69, 70, 71};
@@ -126,10 +126,10 @@ const uint8_t DIEZ_H[] = {109, 108, 107, 106};
 const uint8_t ONCE[] = {103, 102, 101, 100};
 const uint8_t DOCE[] = {110, 111, 112, 113};
 
-// Conjunction "Y" (Row 10 - Par L->R)
+// Conjunción "Y" (Fila 10 - Par L->R)
 const uint8_t Y[] = {115};
 
-// Minutes for "Y" (Rows 11, 12, 13)
+// Minutos para bloque "Y" (Filas 11, 12, 13)
 const uint8_t VEINTE_Y[] = {131, 130, 129, 128, 127, 126};
 const uint8_t DIEZ_Y[] = {124, 123, 122, 121};
 const uint8_t VEINTICINCO_Y[] = {132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142};
@@ -137,10 +137,10 @@ const uint8_t CINCO_Y[] = {138, 139, 140, 141, 142};
 const uint8_t CUARTO_Y[] = {153, 152, 151, 150, 149, 148};
 const uint8_t MEDIA[] = {147, 146, 145, 144, 143};
 
-// Minute dots (indices 154-157)
+// Puntos de minutos individuales (índices 154 a 157)
 const uint8_t MIN_LEDS[4] = { 154, 155, 156, 157 };
 
-/* ========== Helper Functions ========== */
+/* ========== Funciones Auxiliares ========== */
 
 inline bool isWifiLed(uint8_t idx) {
   for (uint8_t i = 0; i < 4; i++) {
@@ -275,7 +275,7 @@ void printDebugStatus(int hourVal, int minuteVal) {
 #endif
 }
 
-/* ========== Crossfade Animation ========== */
+/* ========== Animación de Transición Suave (Crossfade) ========== */
 void crossFade(uint8_t steps = 45, uint16_t delayMs = 18) {
   for (uint8_t s = 0; s <= steps; s++) {
     uint8_t amt = (255 * s) / steps;
@@ -287,7 +287,7 @@ void crossFade(uint8_t steps = 45, uint16_t delayMs = 18) {
   }
 }
 
-/* ========== Hour mapping helper ========== */
+/* ========== Función Auxiliar de Mapeo de Horas ========== */
 void hour(uint8_t h) {
   switch (h) {
     case 1: setW(UNA, 3, "UNA"); break;
@@ -314,11 +314,11 @@ bool isNightHour(uint8_t hour) {
   }
 }
 
-/* ========== Time -> LED mapping generator ========== */
+/* ========== Generador de Mapeo de Hora a LEDs ========== */
 void buildTimeTarget(int hourVal, int minuteVal) {
   debugWords = "";
 
-  // Day/Night brightness auto adjustment
+  // Ajuste automático de brillo Día/Noche
   uint8_t effectivePercent = isNightHour(hourVal) ? nightBrightPercent : dayBrightPercent;
   uint8_t brightnessVal = map(effectivePercent, 0, 100, 0, 255);
   FastLED.setBrightness(brightnessVal);
@@ -334,7 +334,7 @@ void buildTimeTarget(int hourVal, int minuteVal) {
   uint8_t nextHour = (h % 12) + 1;
 
   if (rounded >= 35) {
-    // --- "PARA" MINUTES BLOCK (35 to 59) ---
+    // --- BLOQUE DE MINUTOS "PARA" (35 a 59) ---
     setW(SON, 3, "SON");
     switch (rounded) {
       case 35:
@@ -359,14 +359,14 @@ void buildTimeTarget(int hourVal, int minuteVal) {
         break;
     }
 
-    // Article before the hour: "LA" if next hour is 1, "LAS" for others
+    // Artículo antes de la hora: "LA" si la siguiente hora es 1, "LAS" para las demás
     if (nextHour == 1) {
       setW(LA_PARA, 2, "LA");
     } else {
       setW(LAS_PARA, 3, "LAS");
     }
 
-    // Next hour
+    // Siguiente hora
     if (nextHour == 1) {
       setW(UNA_PARA, 3, "UNA");
     } else {
@@ -374,8 +374,8 @@ void buildTimeTarget(int hourVal, int minuteVal) {
     }
 
   } else {
-    // --- "Y" OR ON-THE-HOUR MINUTES BLOCK (0 to 34) ---
-    // Verb + Article: "ES LA" if hour is 1, "SON LAS" for others
+    // --- BLOQUE DE HORA EN PUNTO O CONJUNCIÓN "Y" (0 a 34) ---
+    // Verbo + Artículo: "ES LA" si la hora es 1, "SON LAS" para las demás
     if (h == 1) {
       setW(ES, 2, "ES");
       setW(LA, 2, "LA");
@@ -384,10 +384,10 @@ void buildTimeTarget(int hourVal, int minuteVal) {
       setW(LAS, 3, "LAS");
     }
 
-    // Current hour
+    // Hora actual
     hour(h);
 
-    // Minutes additions
+    // Adición de minutos
     switch (rounded) {
       case 5:
         setW(Y, 1, "Y");
@@ -421,7 +421,7 @@ void buildTimeTarget(int hourVal, int minuteVal) {
   printDebugStatus(hourVal, minuteVal);
 }
 
-/* ========== WiFi Captive Portal WebServer ========== */
+/* ========== Servidor Web del Portal Cautivo WiFi ========== */
 
 String makePageHtml() {
   char colorHex[8];
@@ -697,7 +697,7 @@ function syncPhoneTime() {
   return html;
 }
 
-/* ========== Load/Save Settings using Preferences ========== */
+/* ========== Cargar/Guardar Configuración en Preferences ========== */
 void loadSettings() {
   prefs.begin("wordclock", true);
   dayBrightPercent = prefs.getUChar(P_DB, DEFAULT_DAY_BRI_PERCENT);
@@ -724,7 +724,7 @@ void saveSettings() {
   prefs.end();
 }
 
-/* ========== HTTP Handlers ========== */
+/* ========== Manejadores de Rutas HTTP ========== */
 
 void handleRoot() {
   server.send(200, "text/html", makePageHtml());
@@ -796,7 +796,7 @@ void handleSetTime() {
   }
 }
 
-/* ========== Start Captive AP ========== */
+/* ========== Iniciar Punto de Acceso Cautivo (Modo AP) ========== */
 void startAP() {
   WiFi.mode(WIFI_AP);
   WiFi.softAP("WORDCLOCK-SETUP");
@@ -811,7 +811,7 @@ void startAP() {
   server.on("/settime", handleSetTime);
   server.onNotFound([]() {
     server.sendHeader("Location", "http://" + WiFi.softAPIP().toString() + "/");
-    server.send(302, "text/plain", "Redirecting...");
+    server.send(302, "text/plain", "Redirigiendo...");
   });
 
   server.begin();
@@ -865,7 +865,7 @@ void showTimeAndFade(int h, int m) {
   crossFade(40, 15);
 }
 
-/* ========== Startup Boot Animation (Multicolor Matrix Rain REVEALS Words AT THE END) ========== */
+/* ========== Animación de Inicio (Lluvia Matrix Multicolor que REVELA las palabras al final) ========== */
 void startAnimation() {
   fill_solid(leds, NUM_LEDS, CRGB::Black);
   FastLED.setBrightness(230);
@@ -955,7 +955,7 @@ void startAnimation() {
   FastLED.show();
 }
 
-/* ========== Arduino Setup & Main Loop ========== */
+/* ========== Configuración Inicial (Setup) y Bucle Principal (Loop) ========== */
 
 void setup() {
   Serial.begin(115200);
@@ -1004,7 +1004,7 @@ void loop() {
       clientConnected = true;
     }
 
-    // Access Point timeout: shutdown after 60 seconds if no user connects
+    // Tiempo límite del Punto de Acceso: apagar tras 60 segundos si ningún usuario se conecta
     if (!clientConnected && (millis() - apStartTime > 60000UL)) {
       dnsServer.stop();
       WiFi.softAPdisconnect(true);
@@ -1015,7 +1015,7 @@ void loop() {
 #endif
     }
 
-    // Access Point shutdown: client disconnected
+    // Apagado del Punto de Acceso: cliente desconectado
     if (clientConnected && (WiFi.softAPgetStationNum() == 0) && (millis() - apStartTime > 500)) {
       dnsServer.stop();
       WiFi.softAPdisconnect(true);
@@ -1029,7 +1029,7 @@ void loop() {
 
   applyWifiStatusVisuals();
 
-  // Tick time loop (check minutes)
+  // Bucle de tiempo (comprobación de cambio de minuto)
   DateTime now = getValidRtcDateTime();
   if (now.minute() != lastMinute) {
     lastMinute = now.minute();
