@@ -1,6 +1,10 @@
 # Mexican Spanish Word Clock (WordClock)
 ### Hardware: Seeed Studio XIAO ESP32-C6 + 158-LED WS2812B Matrix
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Web_Simulator-2ea44f?style=for-the-badge&logo=googlechrome&logoColor=white)](https://ainxstep.github.io/wordclock-xiao-led/)
+[![License](https://img.shields.io/badge/License-MIT_%2F_CC_BY--SA_4.0-blue?style=for-the-badge)](LICENSE)
+[![Hardware](https://img.shields.io/badge/Hardware-XIAO_ESP32--C6-orange?style=for-the-badge&logo=espressif&logoColor=white)](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/)
+
 🌐 **Idioma / Language:** [Español](README.md) | **English**
 
 ---
@@ -103,7 +107,8 @@ Row 14 (154-157): Minute Dots (+1, +2, +3, +4)
 ## Getting Started
 
 ### 1. Web Simulator
-Open `simulator/index.html` directly in any modern web browser to test word illumination in Mexican Spanish, adjust time with the slider, or sync to your browser's clock.
+* **🌐 Live Online (No install needed)**: Try the interactive simulator directly at [ainxstep.github.io/wordclock-xiao-led](https://ainxstep.github.io/wordclock-xiao-led/).
+* **💻 Run Locally**: Open `simulator/index.html` directly in any modern web browser to test word illumination in Mexican Spanish, adjust time with the slider, or sync to your browser's clock.
 
 ### 2. Firmware (Arduino IDE)
 1. Install **ESP32 by Espressif Systems** via the Arduino IDE Boards Manager.

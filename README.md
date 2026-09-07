@@ -1,6 +1,10 @@
 # Reloj de Palabras (WordClock) - Español Mexicano
 ### Hardware: Seeed Studio XIAO ESP32-C6 + Matriz 158 LEDs WS2812B
 
+[![Demo en Vivo](https://img.shields.io/badge/Demo_en_Vivo-Simulador_Web-2ea44f?style=for-the-badge&logo=googlechrome&logoColor=white)](https://ainxstep.github.io/wordclock-xiao-led/)
+[![Licencia](https://img.shields.io/badge/Licencia-MIT_%2F_CC_BY--SA_4.0-blue?style=for-the-badge)](LICENSE)
+[![Hardware](https://img.shields.io/badge/Hardware-XIAO_ESP32--C6-orange?style=for-the-badge&logo=espressif&logoColor=white)](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/)
+
 🌐 **Idioma / Language:** **Español** | [English](README.en.md)
 
 ---
@@ -103,7 +107,8 @@ Fila 14 (154-157): Puntos de minutos (+1, +2, +3, +4)
 ## Cómo Usar
 
 ### 1. Simulador Web
-Abre directamente `simulator/index.html` en cualquier navegador web moderno para verificar la lógica de iluminación en español mexicano, ajustar la hora manualmente con el slider o sincronizarla en tiempo real.
+* **🌐 Probar en línea (sin descargas)**: Accede a la demo en vivo directamente en [ainxstep.github.io/wordclock-xiao-led](https://ainxstep.github.io/wordclock-xiao-led/).
+* **💻 Ejecución local**: Abre directamente `simulator/index.html` en cualquier navegador web moderno para verificar la lógica de iluminación en español mexicano, ajustar la hora manualmente con el slider o sincronizarla en tiempo real.
 
 ### 2. Firmware (Arduino IDE)
 1. Instala la placa **ESP32 by Espressif Systems** en el Gestor de Placas de Arduino IDE.
