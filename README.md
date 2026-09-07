@@ -46,7 +46,8 @@ El repositorio está organizado en módulos independientes para facilitar la nav
 wordclock/
 ├── docs/                                  # Especificaciones técnicas, esquemas y recursos
 │   ├── images/                            # Fotografías del proyecto físico ensamblado
-│   │   └── wordclock-front.jpg
+│   │   ├── wordclock-front.jpg            # Vista frontal en funcionamiento
+│   │   └── wordclock-internals.jpg        # Ensamble interior y electrónica
 │   ├── matrix-layout.txt                  # Mapeo físico detallado de los 158 LEDs (cableado progresivo)
 │   └── matrix-grid.txt                    # Distribución de la cuadrícula de texto (11x14)
 │
@@ -81,6 +82,12 @@ wordclock/
 * **Tira de LEDs**: WS2812B de 74 LEDs/m (158 LEDs en total: matriz 11×14 + 4 puntos de minutos)
 * **Conector de Chasis**: [Puerto USB-C Hembra impermeable para panel (2 pines, 3A)](https://es.aliexpress.com/item/1005011950115260.html) con cable de extensión hacia la placa driver
 * **Alimentación**: [Adaptador de Corriente Universal USB-C 24W (12V @ 2A)](https://es.aliexpress.com/item/1005007438665930.html)
+
+<p align="center">
+  <img src="docs/images/wordclock-internals.jpg" alt="Ensamble interno y componentes de WordClock" width="460">
+  <br>
+  <em>Componentes y cableado interno: Placa Seeed LED Driver con XIAO ESP32-C6, módulo Grove RTC (DS1307), placa posterior con ventilación y matriz de tiras LED WS2812B interconectadas</em>
+</p>
 
 ### Diagrama de Conexiones
 

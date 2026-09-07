@@ -46,7 +46,8 @@ The repository is organized into modular directories for clean navigation and ma
 wordclock/
 ├── docs/                                  # Technical specifications, diagrams, and assets
 │   ├── images/                            # Photographs of the assembled physical clock
-│   │   └── wordclock-front.jpg
+│   │   ├── wordclock-front.jpg            # Front view in operation
+│   │   └── wordclock-internals.jpg        # Internal assembly and electronics
 │   ├── matrix-layout.txt                  # Physical progressive LED indexing layout (158 LEDs)
 │   └── matrix-grid.txt                    # Letter grid distribution (11x14)
 │
@@ -81,6 +82,12 @@ wordclock/
 * **LED Strip**: WS2812B @ 74 LEDs/m (158 total LEDs: 11×14 matrix + 4 individual minute dots)
 * **Chassis Power Port**: [Waterproof USB-C Female Panel Mount Connector (2-Pin, 3A)](https://es.aliexpress.com/item/1005011950115260.html) with pigtail extension cable
 * **Power Supply**: [Universal 24W USB-C Power Adapter (12V @ 2A)](https://es.aliexpress.com/item/1005007438665930.html)
+
+<p align="center">
+  <img src="docs/images/wordclock-internals.jpg" alt="Internal assembly and components of WordClock" width="460">
+  <br>
+  <em>Internal assembly and wiring: Seeed LED Driver Board hosting the XIAO ESP32-C6, Grove RTC (DS1307), ventilated rear backplate, and interconnected WS2812B LED strip carrier plate</em>
+</p>
 
 ### Wiring Diagram
 
