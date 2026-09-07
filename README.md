@@ -75,82 +75,75 @@ wordclock/
 
 ## Hardware Utilizado
 
-* **Microcontrolador**: [Seeed Studio XIAO ESP32-C6](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/)
-* **Driver de LEDs**: Seeed LED Driver Board (Level Shifter bidireccional 3.3V → 5V)
+* **Placa Base / Driver**: Seeed LED Driver Board (Alimentación única 12V DC, regulador interno, zócalo integrado para XIAO, puerto Grove I2C y salida directa para tira LED)
+* **Microcontrolador**: [Seeed Studio XIAO ESP32-C6](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/) (montado directamente en el zócalo de la placa driver)
+* **Módulo RTC**: Grove - DS1307 RTC (conectado con cable Grove nativo al puerto I2C de la placa driver)
 * **Tira de LEDs**: WS2812B de 74 LEDs/m (158 LEDs en total: matriz 11×14 + 4 puntos de minutos)
-* **Módulo RTC**: Grove - DS1307 RTC (bus I2C nativo a 100 kHz)
-* **Pines Principales**:
-  * Pin de datos LEDs: `D0` / `GPIO 0`
-  * LED integrado (estado AP): `GPIO 15`
-  * Bus I2C: Pines Grove SDA/SCL (`D4` / `D5`)
+* **Alimentación**: Adaptador de corriente externo de **12V @ 2A** (conector plug DC directo a la placa driver)
 
 ### Diagrama de Conexiones
 
 ```mermaid
 flowchart TD
-    subgraph PWR["Fuente de Alimentación (5V / 2A - 3A)"]
-        V5["+5V"]
-        GND_PWR["GND"]
+    subgraph PWR["Alimentación Externa"]
+        V12["Adaptador 12V / 2A (Plug DC)"]
     end
 
-    subgraph MCU["Seeed Studio XIAO ESP32-C6"]
-        GPIO0["D0 / GPIO 0 (Data Out 3.3V)"]
-        SDA["D4 / SDA"]
-        SCL["D5 / SCL"]
-        VCC_MCU["5V IN"]
-        GND_MCU["GND"]
-    end
+    subgraph DriverBoard["Seeed Studio LED Driver Board (Placa Base)"]
+        DC_IN["Entrada de Alimentación: 12V DC"]
+        REG["Regulación interna DC-DC (12V → 5V / 3.3V) + Level Shifter"]
 
-    subgraph LevelShifter["Seeed LED Driver Board (Level Shifter)"]
-        DIN_LV["Data In (3.3V)"]
-        DOUT_HV["Data Out (5V)"]
-        VCC_LS["5V"]
-        GND_LS["GND"]
+        subgraph XiaoSocket["Zócalo XIAO"]
+            XIAO["Seeed Studio XIAO ESP32-C6<br>(Montado directamente en zócalo)"]
+        end
+
+        subgraph GrovePort["Puerto Grove I2C"]
+            GROVE_OUT["SCL / SDA / VCC / GND"]
+        end
+
+        subgraph LedOut["Conector de Salida para Tira LED"]
+            OUT_GND["GND"]
+            OUT_DAT["DATA (5V Level-Shifted)"]
+            OUT_5V["+5V"]
+            OUT_12V["+12V (No utilizado)"]
+        end
     end
 
     subgraph RTC["Grove RTC (DS1307)"]
-        RTC_SDA["SDA"]
-        RTC_SCL["SCL"]
-        RTC_VCC["VCC"]
-        RTC_GND["GND"]
+        RTC_PORT["Puerto Grove I2C<br>(SCL, SDA, VCC, GND)"]
     end
 
     subgraph Matriz["Matriz LEDs WS2812B (158 LEDs)"]
-        DIN_LED["DIN (LED #0)"]
-        VCC_LED["+5V"]
-        GND_LED["GND"]
+        LED_DIN["DIN (LED #0)"]
+        LED_VCC["+5V"]
+        LED_GND["GND"]
     end
 
-    V5 --> VCC_MCU
-    V5 --> VCC_LS
-    V5 --> RTC_VCC
-    V5 --> VCC_LED
+    V12 --> DC_IN
+    DC_IN --> REG
+    REG --> XIAO
+    REG --> GrovePort
+    REG --> LedOut
 
-    GND_PWR --> GND_MCU
-    GND_PWR --> GND_LS
-    GND_PWR --> RTC_GND
-    GND_PWR --> GND_LED
+    GrovePort <== Cable Grove (I2C + Energía) ==> RTC_PORT
 
-    GPIO0 --> DIN_LV
-    DOUT_HV --> DIN_LED
-
-    SDA <--> RTC_SDA
-    SCL --> RTC_SCL
+    OUT_DAT --> LED_DIN
+    OUT_5V --> LED_VCC
+    OUT_GND --> LED_GND
 ```
 
 ### Tabla de Cableado
 
-| Componente Origen | Pin Origen | Componente Destino | Pin Destino | Función / Descripción |
-| :--- | :--- | :--- | :--- | :--- |
-| **XIAO ESP32-C6** | `D0` (`GPIO 0`) | **LED Driver Board** | `DIN (3.3V)` | Señal digital FastLED |
-| **LED Driver Board** | `DOUT (5V)` | **Matriz WS2812B** | `DIN` (LED #0) | Datos con nivel elevado a 5V |
-| **XIAO ESP32-C6** | `D4` (`SDA`) | **Grove RTC DS1307** | `SDA` | Bus I2C Datos (100 kHz) |
-| **XIAO ESP32-C6** | `D5` (`SCL`) | **Grove RTC DS1307** | `SCL` | Bus I2C Reloj |
-| **Fuente 5V** | `+5V` | **Todos** | `5V` / `VCC` | Línea de alimentación positiva común |
-| **Fuente 5V** | `GND` | **Todos** | `GND` | Línea de tierra común |
+| Conector / Puerto | Pines / Terminales | Componente Conectado | Función / Descripción |
+| :--- | :--- | :--- | :--- |
+| **Entrada Jack DC** | `12V`, `GND` | Adaptador externo (12V @ 2A) | Entrada de alimentación principal para todo el ensamble |
+| **Zócalo XIAO** | Headers hembra | XIAO ESP32-C6 | Interconexión directa de energía, bus I2C y pin de señal `D0/GPIO 0` |
+| **Puerto Grove I2C** | `SCL`, `SDA`, `VCC`, `GND` | Grove RTC (DS1307) | Conexión directa mediante cable Grove estándar (datos I2C + energía) |
+| **Conector Salida LED**| `DATA`, `+5V`, `GND` | Matriz WS2812B (158 LEDs) | Salida regulada a 5V y señal digital para el primer LED (`DIN`) |
 
 > [!TIP]
-> **Alimentación recomendada**: Se recomienda una fuente regulada de **5V a 2A o 3A**. Aunque en operación normal solo se iluminan las palabras de la hora activa (consumo típico < 1A), este margen previene caídas de voltaje y reinicios espontáneos del ESP32-C6.
+> **Alimentación del sistema**: El reloj requiere únicamente un adaptador externo de **12V @ 2A**. La placa Seeed LED Driver Board se encarga internamente de convertir y distribuir los voltajes requeridos: 3.3V para el microcontrolador XIAO, 5V para el módulo Grove RTC y 5V con suficiente corriente para alimentar los 158 LEDs WS2812B.
+
 
 ---
 
