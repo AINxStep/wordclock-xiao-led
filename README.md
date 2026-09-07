@@ -1,10 +1,30 @@
-# Reloj de Palabras (WordClock) - Seeed Studio XIAO ESP32-C6
+# Reloj de Palabras (WordClock) - Español Mexicano
+### Hardware: Seeed Studio XIAO ESP32-C6 + Matriz 158 LEDs WS2812B
 
 🌐 **Idioma / Language:** **Español** | [English](README.en.md)
 
 ---
 
-Proyecto completo de hardware, firmware, modelos 3D y simulador web para un reloj de palabras (*WordClock*) en español, con matriz de 158 LEDs direccionables WS2812B y control WiFi / RTC.
+Proyecto completo de hardware, firmware, modelos 3D y simulador web para un reloj de palabras (*WordClock*) **regionalizado para el español de México** (particularmente el centro del país), con matriz de 158 LEDs direccionables WS2812B y sincronización WiFi / RTC.
+
+---
+
+## 🇲🇽 El Factor Diferenciador: Español Mexicano
+
+La inmensa mayoría de los relojes de palabras en español existentes en internet fueron creados según la convención de España (castellano europeo), la cual utiliza la estructura de resta (*"Las tres menos cuarto"*, *"Las cuatro menos diez"*, *"Las seis menos veinte"*).
+
+En **México**, la manera natural y cotidiana en que decimos la hora invierte la estructura a partir del minuto 35, expresando los minutos que faltan **PARA** la siguiente hora:
+
+* ❌ **Enfoque europeo:** `SON LAS TRES MENOS CUARTO`
+* 🇲🇽 **Enfoque mexicano (este WordClock):** `CUARTO PARA LAS TRES`, `DIEZ PARA LAS CUATRO`, `VEINTICINCO PARA LA UNA`
+
+### Adaptación física de la matriz
+Para soportar esta sintaxis mexicana de forma natural y visualmente coherente, la matriz de 11×14 se dividió estratégicamente en 3 secciones:
+
+1. **Filas superiores (1 a 4) - Bloque "PARA":** Contienen los minutos preliminares (`VEINTICINCO`, `DIEZ`, `VEINTE`, `CUARTO`), la palabra clave `PARA`, y los artículos `LA` / `LAS` / `UNA` más el indicador de estado `WIFI`.
+2. **Filas intermedias (5 a 10) - Bloque de Horas:** Mapean las doce horas (`UNA` a `DOCE`) en orden lógico y optimizado.
+3. **Filas inferiores (11 a 13) - Bloque "Y":** Contienen la conjunción `Y` junto con los minutos para la primera mitad de la hora (`DIEZ`, `VEINTE`, `VEINTICINCO`, `CUARTO`, `MEDIA`).
+4. **Fila 14 (Puntos de precisión):** 4 LEDs individuales (+1, +2, +3, +4) para lectura exacta minuto a minuto.
 
 ---
 
@@ -21,7 +41,7 @@ wordclock/
 ├── simulator/                             # Simulador Web interactivo
 │   ├── index.html                         # Interfaz gráfica del simulador
 │   ├── index.css                          # Estilos visuales y efectos de iluminación LED
-│   └── app.js                             # Lógica de tiempo, modos (real/manual) y portal WiFi
+│   └── app.js                             # Lógica de tiempo en español mexicano y portal WiFi
 │
 ├── arduino/                               # Firmware para Arduino IDE
 │   ├── wordclock/                         # Sketch principal
@@ -61,9 +81,7 @@ wordclock/
 
 ---
 
-## Matriz de Letras y Lógica en Español
-
-La matriz cuenta con 11 columnas × 14 filas (154 LEDs) más 4 LEDs dedicados a los minutos individuales (+1, +2, +3, +4):
+## Matriz de Letras (11×14 + 4 Puntos)
 
 ```text
 Fila 0  (0-10):    E S O N X L A S U N A    (ES, SON, LA, LAS, UNA)
@@ -83,16 +101,16 @@ Fila 13 (143-153): C U A R T O M E D I A    (Minutos para bloque Y)
 Fila 14 (154-157): Puntos de minutos (+1, +2, +3, +4)
 ```
 
-* **Bloque "Y"** (minutos 00 a 34): *Ej. "SON LAS ONCE Y VEINTE"*
-* **Bloque "PARA"** (minutos 35 a 59): *Ej. "VEINTICINCO PARA LAS DOCE"*
-* **Puntos de minutos**: Permiten precisión minuto a minuto.
+* **Bloque "Y"** (minutos 00 a 34): *Ej. "SON LAS ONCE Y VEINTE"*, *"ES LA UNA Y DIEZ"*
+* **Bloque "PARA"** (minutos 35 a 59): *Ej. "VEINTICINCO PARA LAS DOCE"*, *"CUARTO PARA LA UNA"*
+* **Puntos de minutos (+1 a +4)**: Ajuste exacto de minutos individuales.
 
 ---
 
 ## Cómo Usar
 
 ### 1. Simulador Web
-Abre directamente `simulator/index.html` en cualquier navegador web moderno para verificar la lógica de iluminación, ajustar la hora manualmente con el slider o sincronizarla en tiempo real.
+Abre directamente `simulator/index.html` en cualquier navegador web moderno para verificar la lógica de iluminación en español mexicano, ajustar la hora manualmente con el slider o sincronizarla en tiempo real.
 
 ### 2. Firmware (Arduino IDE)
 1. Instala la placa **ESP32 by Espressif Systems** en el Gestor de Placas de Arduino IDE.

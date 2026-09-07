@@ -1,10 +1,30 @@
-# Word Clock (WordClock) - Seeed Studio XIAO ESP32-C6
+# Mexican Spanish Word Clock (WordClock)
+### Hardware: Seeed Studio XIAO ESP32-C6 + 158-LED WS2812B Matrix
 
 🌐 **Idioma / Language:** [Español](README.md) | **English**
 
 ---
 
-Complete project including hardware, firmware, 3D printable models, and an interactive web simulator for a Spanish Word Clock (*WordClock*), powered by an addressable 158-LED WS2812B matrix with WiFi AP configuration and RTC timekeeping.
+Complete project featuring hardware, firmware, 3D printable models, and an interactive web simulator for a Word Clock (*WordClock*) **specifically regionalized for Mexican Spanish** (as spoken colloquially throughout Central Mexico), driven by an addressable 158-LED WS2812B matrix with WiFi AP configuration and RTC timekeeping.
+
+---
+
+## 🇲🇽 Key Differentiator: Mexican Spanish Colloquial Syntax
+
+The vast majority of Spanish word clocks available online follow the European (Castilian) Spanish convention, which relies on a subtraction structure (*"Las tres menos cuarto"* / Three minus a quarter, *"Las cuatro menos diez"* / Four minus ten).
+
+In **Mexico**, everyday colloquial speech flips the structure after minute 35, expressing the minutes remaining **UNTIL (PARA)** the next hour:
+
+* ❌ **European Spanish syntax:** `SON LAS TRES MENOS CUARTO`
+* 🇲🇽 **Mexican Spanish syntax (this WordClock):** `CUARTO PARA LAS TRES` (Quarter to three), `DIEZ PARA LAS CUATRO` (Ten to four), `VEINTICINCO PARA LA UNA` (Twenty-five to one)
+
+### Custom Physical Matrix Architecture
+To support this Mexican syntax naturally and legibly, the 11×14 LED matrix is divided into three functional vertical sections:
+
+1. **Top Rows (1–4) - The "PARA" (To) Block:** Houses the pre-hour minute phrases (`VEINTICINCO`, `DIEZ`, `VEINTE`, `CUARTO`), the keyword `PARA`, articles `LA` / `LAS` / `UNA`, and the `WIFI` status indicator.
+2. **Middle Rows (5–10) - The Hours Block:** Houses the twelve hours (`UNA` through `DOCE`) in an optimized sequence.
+3. **Bottom Rows (11–13) - The "Y" (Past) Block:** Houses the conjunction `Y` and minutes for the first half of the hour (`DIEZ`, `VEINTE`, `VEINTICINCO`, `CUARTO`, `MEDIA`).
+4. **Row 14 (Precision Dots):** 4 individual LEDs (+1, +2, +3, +4) for single-minute accuracy.
 
 ---
 
@@ -21,7 +41,7 @@ wordclock/
 ├── simulator/                             # Interactive Web Simulator
 │   ├── index.html                         # Simulator user interface
 │   ├── index.css                          # Visual styling and realistic LED glow effects
-│   └── app.js                             # Clock logic, modes (real-time/manual slider), and WiFi portal
+│   └── app.js                             # Mexican Spanish clock logic, modes, and WiFi portal
 │
 ├── arduino/                               # Firmware for Arduino IDE
 │   ├── wordclock/                         # Main sketch folder
@@ -61,9 +81,7 @@ wordclock/
 
 ---
 
-## Letter Matrix & Spanish Time Logic
-
-The matrix features 11 columns × 14 rows (154 LEDs) plus 4 discrete LEDs for individual minutes (+1, +2, +3, +4):
+## Letter Matrix (11×14 + 4 Dots)
 
 ```text
 Row 0  (0-10):    E S O N X L A S U N A    (ES, SON, LA, LAS, UNA)
@@ -83,16 +101,16 @@ Row 13 (143-153): C U A R T O M E D I A    (Minutes for "Y" phrase)
 Row 14 (154-157): Minute Dots (+1, +2, +3, +4)
 ```
 
-* **"Y" Block** (minutes 00 to 34): *e.g., "SON LAS ONCE Y VEINTE" (It's 11:20)*
-* **"PARA" Block** (minutes 35 to 59): *e.g., "VEINTICINCO PARA LAS DOCE" (25 to 12)*
-* **Minute Dots**: Provide single-minute precision (+1 to +4).
+* **"Y" Block** (minutes 00 to 34): *e.g., "SON LAS ONCE Y VEINTE"*, *"ES LA UNA Y DIEZ"*
+* **"PARA" Block** (minutes 35 to 59): *e.g., "VEINTICINCO PARA LAS DOCE"*, *"CUARTO PARA LA UNA"*
+* **Minute Dots (+1 to +4)**: Single-minute exact reading.
 
 ---
 
 ## Getting Started
 
 ### 1. Web Simulator
-Open `simulator/index.html` directly in any modern web browser to simulate and verify word illumination, change color presets, adjust time with the slider, or sync to your browser's real clock.
+Open `simulator/index.html` directly in any modern web browser to test word illumination in Mexican Spanish, adjust time with the slider, or sync to your browser's clock.
 
 ### 2. Firmware (Arduino IDE)
 1. Install **ESP32 by Espressif Systems** via the Arduino IDE Boards Manager.
