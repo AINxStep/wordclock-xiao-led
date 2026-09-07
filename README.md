@@ -73,20 +73,22 @@ wordclock/
 
 ---
 
-## Hardware Utilizado
+## Hardware y Lista de Materiales (BOM)
 
-* **Placa Base / Driver**: Seeed LED Driver Board (Alimentación única 12V DC, regulador interno, zócalo integrado para XIAO, puerto Grove I2C y salida directa para tira LED)
+* **Placa Base / Driver**: [Seeed LED Driver Board](https://wiki.seeedstudio.com/led_driver_board/) (Alimentación única 12V DC, regulador interno, zócalo integrado para XIAO, puerto Grove I2C y salida directa para tira LED)
 * **Microcontrolador**: [Seeed Studio XIAO ESP32-C6](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/) (montado directamente en el zócalo de la placa driver)
-* **Módulo RTC**: Grove - DS1307 RTC (conectado con cable Grove nativo al puerto I2C de la placa driver)
+* **Módulo RTC**: [Grove - DS1307 RTC](https://wiki.seeedstudio.com/Grove-RTC/#pre-reading) (conectado con cable Grove nativo al puerto I2C de la placa driver)
 * **Tira de LEDs**: WS2812B de 74 LEDs/m (158 LEDs en total: matriz 11×14 + 4 puntos de minutos)
-* **Alimentación**: Adaptador de corriente externo de **12V @ 2A** (conector plug DC directo a la placa driver)
+* **Conector de Chasis**: [Puerto USB-C Hembra impermeable para panel (2 pines, 3A)](https://es.aliexpress.com/item/1005011950115260.html) con cable de extensión hacia la placa driver
+* **Alimentación**: [Adaptador de Corriente Universal USB-C 24W (12V @ 2A)](https://es.aliexpress.com/item/1005007438665930.html)
 
 ### Diagrama de Conexiones
 
 ```mermaid
 flowchart TD
-    subgraph PWR["Alimentación Externa"]
-        V12["Adaptador 12V / 2A (Plug DC)"]
+    subgraph PWR["Alimentación Externa y Chasis"]
+        V12["Adaptador USB-C 12V / 2A (24W)"]
+        USBC_PORT["Puerto USB-C Hembra Impermeable (Panel Trasero)"]
     end
 
     subgraph DriverBoard["Seeed Studio LED Driver Board (Placa Base)"]
@@ -119,7 +121,8 @@ flowchart TD
         LED_GND["GND"]
     end
 
-    V12 --> DC_IN
+    V12 --> USBC_PORT
+    USBC_PORT --> DC_IN
     DC_IN --> REG
     REG --> XIAO
     REG --> GrovePort
@@ -136,13 +139,15 @@ flowchart TD
 
 | Conector / Puerto | Pines / Terminales | Componente Conectado | Función / Descripción |
 | :--- | :--- | :--- | :--- |
-| **Entrada Jack DC** | `12V`, `GND` | Adaptador externo (12V @ 2A) | Entrada de alimentación principal para todo el ensamble |
-| **Zócalo XIAO** | Headers hembra | XIAO ESP32-C6 | Interconexión directa de energía, bus I2C y pin de señal `D0/GPIO 0` |
-| **Puerto Grove I2C** | `SCL`, `SDA`, `VCC`, `GND` | Grove RTC (DS1307) | Conexión directa mediante cable Grove estándar (datos I2C + energía) |
+| **Panel Trasero (Chasis)** | `VBUS (12V)`, `GND` | [Puerto USB-C Hembra Impermeable](https://es.aliexpress.com/item/1005011950115260.html) | Entrada externa en el chasis para recibir alimentación mediante cable USB-C |
+| **Entrada DC Driver** | `12V`, `GND` | [Adaptador USB-C 12V @ 2A](https://es.aliexpress.com/item/1005007438665930.html) | Fuente conmutada regulada de 24W que alimenta todo el sistema |
+| **Zócalo XIAO** | Headers hembra | [XIAO ESP32-C6](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/) | Interconexión directa de energía, bus I2C y pin de señal `D0/GPIO 0` |
+| **Puerto Grove I2C** | `SCL`, `SDA`, `VCC`, `GND` | [Grove RTC (DS1307)](https://wiki.seeedstudio.com/Grove-RTC/#pre-reading) | Conexión directa mediante cable Grove estándar (datos I2C + energía) |
 | **Conector Salida LED**| `DATA`, `+5V`, `GND` | Matriz WS2812B (158 LEDs) | Salida regulada a 5V y señal digital para el primer LED (`DIN`) |
 
 > [!TIP]
 > **Alimentación del sistema**: El reloj requiere únicamente un adaptador externo de **12V @ 2A**. La placa Seeed LED Driver Board se encarga internamente de convertir y distribuir los voltajes requeridos: 3.3V para el microcontrolador XIAO, 5V para el módulo Grove RTC y 5V con suficiente corriente para alimentar los 158 LEDs WS2812B.
+
 
 
 ---

@@ -73,24 +73,26 @@ wordclock/
 
 ---
 
-## Hardware Components
+## Hardware and Bill of Materials (BOM)
 
-* **Baseboard / Driver**: Seeed LED Driver Board (Single 12V DC input, internal DC-DC regulation, integrated XIAO socket, Grove I2C port, and direct LED strip output connector)
+* **Carrier / Driver Board**: [Seeed LED Driver Board](https://wiki.seeedstudio.com/led_driver_board/) (Single 12V DC input, internal DC-DC regulation, integrated XIAO socket, Grove I2C port, and direct LED strip output connector)
 * **Microcontroller**: [Seeed Studio XIAO ESP32-C6](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/) (seated directly into the driver board socket)
-* **RTC Module**: Grove - DS1307 RTC (connected via native Grove cable to the driver board I2C port)
+* **RTC Module**: [Grove - DS1307 RTC](https://wiki.seeedstudio.com/Grove-RTC/#pre-reading) (connected via native Grove cable to the driver board I2C port)
 * **LED Strip**: WS2812B @ 74 LEDs/m (158 total LEDs: 11×14 matrix + 4 individual minute dots)
-* **Power Supply**: External **12V @ 2A** DC power adapter (barrel jack connected directly to the driver board)
+* **Chassis Power Port**: [Waterproof USB-C Female Panel Mount Connector (2-Pin, 3A)](https://es.aliexpress.com/item/1005011950115260.html) with pigtail extension cable
+* **Power Supply**: [Universal 24W USB-C Power Adapter (12V @ 2A)](https://es.aliexpress.com/item/1005007438665930.html)
 
 ### Wiring Diagram
 
 ```mermaid
 flowchart TD
-    subgraph PWR["External Power Supply"]
-        V12["12V / 2A DC Power Adapter"]
+    subgraph PWR["External Power & Chassis"]
+        V12["12V / 2A USB-C Power Adapter (24W)"]
+        USBC_PORT["Waterproof USB-C Female Port (Rear Panel Mount)"]
     end
 
     subgraph DriverBoard["Seeed Studio LED Driver Board (Carrier Board)"]
-        DC_IN["Power Input: 12V DC Barrel Jack"]
+        DC_IN["Power Input: 12V DC"]
         REG["Internal DC-DC Buck Regulation (12V → 5V / 3.3V) + Level Shifter"]
 
         subgraph XiaoSocket["XIAO Socket"]
@@ -119,7 +121,8 @@ flowchart TD
         LED_GND["GND"]
     end
 
-    V12 --> DC_IN
+    V12 --> USBC_PORT
+    USBC_PORT --> DC_IN
     DC_IN --> REG
     REG --> XIAO
     REG --> GrovePort
@@ -136,9 +139,10 @@ flowchart TD
 
 | Connector / Port | Pins / Terminals | Connected Device | Function / Description |
 | :--- | :--- | :--- | :--- |
-| **DC Barrel Jack** | `12V`, `GND` | External Power Adapter (12V @ 2A) | Primary power input for the entire system |
-| **XIAO Socket** | Female headers | XIAO ESP32-C6 | Direct power delivery, I2C bus sharing, and `D0/GPIO 0` signal |
-| **Grove I2C Port** | `SCL`, `SDA`, `VCC`, `GND` | Grove RTC (DS1307) | Plug-and-play Grove cable (I2C communication + power) |
+| **Rear Panel (Chassis)** | `VBUS (12V)`, `GND` | [Waterproof USB-C Female Port](https://es.aliexpress.com/item/1005011950115260.html) | External chassis port for convenient 12V power connection via USB-C |
+| **Driver Board DC Input**| `12V`, `GND` | [Universal 12V @ 2A USB-C Adapter](https://es.aliexpress.com/item/1005007438665930.html) | Primary 24W switching power supply feeding the carrier board |
+| **XIAO Socket** | Female headers | [XIAO ESP32-C6](https://wiki.seeedstudio.com/xiao_esp32c6_getting_started/) | Direct power delivery, I2C bus sharing, and `D0/GPIO 0` signal |
+| **Grove I2C Port** | `SCL`, `SDA`, `VCC`, `GND` | [Grove RTC (DS1307)](https://wiki.seeedstudio.com/Grove-RTC/#pre-reading) | Plug-and-play Grove cable (I2C communication + power) |
 | **LED Output Block** | `DATA`, `+5V`, `GND` | WS2812B Matrix (158 LEDs) | Regulated 5V power output and digital signal for first LED (`DIN`) |
 
 > [!TIP]
