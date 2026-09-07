@@ -1,0 +1,55 @@
+================================================================================
+ESPECIFICACIÓN DE LA MATRIZ DE LETRAS - WORDCLOCK (11x14 + 4 Puntos de Minutos)
+================================================================================
+
+Esta es la distribución física definitiva de los 158 LEDs (cableado progresivo)
+en tu reloj de palabras, incluyendo las correcciones de separación de espacios,
+la reubicación del módulo WIFI a la Fila 4 y la duplicación de la palabra UNA.
+
+--------------------------------------------------------------------------------
+1. REPRESENTACIÓN VISUAL DE LA MATRIZ (14 Filas × 11 Columnas)
+--------------------------------------------------------------------------------
+
+Fila 0 (0-10):     E  S  O  N  X  L  A  S  U  N  A   (ES, SON, LA, LAS, UNA)
+Fila 1 (11-21):    V  E  I  N  T  I  C  I  N  C  O   (VEINTICINCO - bloque PARA)
+Fila 2 (22-32):    D  I  E  Z  V  E  I  N  T  E  G   (DIEZ, VEINTE - bloque PARA)
+Fila 3 (33-43):    C  U  A  R  T  O  K  P  A  R  A   (CUARTO, PARA)
+Fila 4 (44-54):    L  A  S  U  N  A  Z  W  I  F  I   (LA, LAS, UNA - bloque PARA, WIFI)
+Fila 5 (55-65):    T  R  E  S  Z  B  G  K  D  O  S   (TRES, DOS)
+Fila 6 (66-76):    C  U  A  T  R  O  C  I  N  C  O   (CUATRO, CINCO)
+Fila 7 (77-87):    U  S  E  I  S  O  S  I  E  T  E   (SEIS, SIETE)
+Fila 8 (88-98):    O  C  H  O  N  U  E  V  E  N  V   (OCHO, NUEVE)
+Fila 9 (99-109):   D  I  E  Z  D  S  O  N  C  E  A   (DIEZ, ONCE)
+Fila 10 (110-120): D  O  C  E  L  Y  E  I  J  K  V   (DOCE, Conjunción Y)
+Fila 11 (121-131): V  E  I  N  T  E  Z  D  I  E  Z   (VEINTE, DIEZ - bloque Y)
+Fila 12 (132-142): V  E  I  N  T  I  C  I  N  C  O   (VEINTICINCO - bloque Y)
+Fila 13 (143-153): C  U  A  R  T  O  M  E  D  I  A   (CUARTO, MEDIA)
+
+Puntos de Minutos (Fila 14):
+[154] Punto +1      [155] Punto +2      [156] Punto +3      [157] Punto +4
+
+--------------------------------------------------------------------------------
+2. MAPEO DETALLADO DE ÍNDICES LED (0-157)
+--------------------------------------------------------------------------------
+
+Rango Fila   | Caracteres                  | Palabras Mapeadas (Índice de LEDs)
+--------------------------------------------------------------------------------
+Fila 0       | E  S  O  N  X  L  A  S  U  N  A   | ES (0-1), SON (1-3), LA (5-6), LAS (5-7), UNA (8-10)
+Fila 1       | V  E  I  N  T  I  C  I  N  C  O   | VEINTICINCO_PARA (11-21), CINCO_PARA (17-21)
+Fila 2       | D  I  E  Z  V  E  I  N  T  E  G   | DIEZ_PARA (22-25), VEINTE_PARA (26-31)
+Fila 3       | C  U  A  R  T  O  K  P  A  R  A   | CUARTO_PARA (33-38), PARA (40-43)
+Fila 4       | L  A  S  U  N  A  Z  W  I  F  I   | LA_PARA (44-45), LAS_PARA (44-46), UNA_PARA (47-49), WIFI (51-54)
+Fila 5       | T  R  E  S  Z  B  G  K  D  O  S   | TRES (55-58), DOS (63-65)
+Fila 6       | C  U  A  T  R  O  C  I  N  C  O   | CUATRO (66-71), CINCO_H (72-76)
+Fila 7       | U  S  E  I  S  O  S  I  E  T  E   | SEIS (78-81), SIETE (83-87)
+Fila 8       | O  C  H  O  N  U  E  V  E  N  V   | OCHO (88-91), NUEVE (92-96)
+Fila 9       | D  I  E  Z  D  S  O  N  C  E  A   | DIEZ_H (99-102), ONCE (105-108)
+Fila 10      | D  O  C  E  L  Y  E  I  J  K  V   | DOCE (110-113), Y (115)
+Fila 11      | V  E  I  N  T  E  Z  D  I  E  Z   | VEINTE_Y (121-126), DIEZ_Y (128-131)
+Fila 12      | V  E  I  N  T  I  C  I  N  C  O   | VEINTICINCO_Y (132-142), CINCO_Y (138-142)
+Fila 13      | C  U  A  R  T  O  M  E  D  I  A   | CUARTO_Y (143-148), MEDIA (149-153)
+--------------------------------------------------------------------------------
+Fila 14 (Dots)| [154], [155], [156], [157]      | Minuto +1 (154), Minuto +2 (155), Minuto +3 (156), Minuto +4 (157)
+--------------------------------------------------------------------------------
+
+================================================================================

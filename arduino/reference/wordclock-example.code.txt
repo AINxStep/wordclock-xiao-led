@@ -1,0 +1,751 @@
+/*
+  Wortuhr (ESP32) - Offline Wortuhr + AP Config (1min)
+*/
+
+#include <FastLED.h>
+#include <Wire.h>
+#include <RTClib.h>
+
+#include <WiFi.h>
+#include <WebServer.h>
+#include <DNSServer.h>
+#include <Preferences.h>
+#include <time.h>
+
+/* ========== Hardware / layout ========== */
+#define DATA_PIN 5
+#define NUM_LEDS 114
+
+RTC_DS3231 rtc;
+CRGB leds[NUM_LEDS];
+CRGB targetLeds[NUM_LEDS];
+
+WebServer server(80);
+DNSServer dnsServer;
+Preferences prefs;
+
+const byte DNS_PORT = 53;
+
+/* ========== Defaults ========== */
+const uint8_t DEFAULT_DAY_BRI_PERCENT = 70;
+const uint8_t DEFAULT_NIGHT_BRI_PERCENT = 20;
+const uint8_t DEFAULT_NIGHT_START = 22;
+const uint8_t DEFAULT_NIGHT_END = 6;
+const CRGB DEFAULT_COLOR = CRGB(255, 225, 200);
+
+/* ========== Stored settings (runtime) ========== */
+uint8_t dayBrightPercent = DEFAULT_DAY_BRI_PERCENT;
+uint8_t nightBrightPercent = DEFAULT_NIGHT_BRI_PERCENT;
+uint8_t nightStartHour = DEFAULT_NIGHT_START;
+uint8_t nightEndHour = DEFAULT_NIGHT_END;
+CRGB WORD_COLOR = DEFAULT_COLOR;
+
+/* Preference keys */
+const char *P_NS = "nightStart";
+const char *P_NE = "nightEnd";
+const char *P_DB = "dayB";
+const char *P_NB = "nightB";
+const char *P_R = "rc";
+const char *P_G = "gc";
+const char *P_B = "bc";
+
+/* ========== WIFI / AP status ========== */
+bool apActive = false;
+bool clientConnected = false;
+unsigned long apStartTime = 0;
+
+/* Pulsing */
+int pulseValue = 10;
+int pulseDir = 8;
+
+/* Status LED indices */
+const uint8_t WIFI_LEDS[4] = { 15, 16, 17, 18 };
+
+/* ========== DEBUG ========== */
+#define DEBUG_SERIAL 1   // pon a 0 para desactivar todos los prints de debug
+String debugWords = "";  // se reconstruye en cada buildTimeTarget()
+
+inline void logW(const char *name) {
+#if DEBUG_SERIAL
+  debugWords += name;
+  debugWords += " ";
+#endif
+}
+
+/* ========== Word mapping (dein Layout) ========== */
+const uint8_t ES[] = { 0, 1 };
+const uint8_t SON[] = { 1, 2, 3 };
+const uint8_t LA[] = { 5, 6 };
+const uint8_t LAS[] = { 5, 6, 7 };
+
+const uint8_t CINCO[] = { 94, 95, 96, 97, 98 };
+const uint8_t DIEZ[] = { 77, 78, 79, 80 };
+const uint8_t VEINTE[] = { 81, 82, 83, 84, 85, 86 };
+const uint8_t CUARTO[] = { 99, 100, 101, 102, 103, 104 };
+const uint8_t MEDIA[] = { 105, 106, 107, 108, 109 };
+const uint8_t VEINTICINCO[] = { 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98 };
+
+const uint8_t Y[] = { 71 };
+const uint8_t MENOS[] = { 72, 73, 74, 75, 76 };
+
+const uint8_t UNA[] = { 8, 9, 10 };
+const uint8_t DOS[] = { 19, 20, 21 };
+const uint8_t TRES[] = { 11, 12, 13, 14 };
+const uint8_t CUATRO[] = { 22, 23, 24, 25, 26, 27 };
+const uint8_t CINCO_H[] = { 28, 29, 30, 31, 32 };
+const uint8_t SEIS[] = { 34, 35, 36, 37 };
+const uint8_t SIETE[] = { 39, 40, 41, 42, 43 };
+const uint8_t OCHO[] = { 44, 45, 46, 47 };
+const uint8_t NUEVE[] = { 48, 49, 50, 51, 52 };
+const uint8_t DIEZ_H[] = { 55, 56, 57, 58 };
+const uint8_t ONCE[] = { 61, 62, 63, 64 };
+const uint8_t DOCE[] = { 66, 67, 68, 69 };
+
+const uint8_t MIN_LEDS[4] = { 110, 111, 112, 113 };
+
+/* ========== Helpers ========== */
+
+inline bool isWifiLed(uint8_t idx) {
+  for (uint8_t i = 0; i < 4; i++)
+    if (WIFI_LEDS[i] == idx) return true;
+  return false;
+}
+
+void clearTarget() {
+  fill_solid(targetLeds, NUM_LEDS, CRGB::Black);
+}
+
+void setW(const uint8_t *arr, uint8_t len, const char *name = nullptr) {
+  for (uint8_t i = 0; i < len; i++) {
+    uint8_t idx = arr[i];
+    if (idx < NUM_LEDS && !isWifiLed(idx)) targetLeds[idx] = WORD_COLOR;
+  }
+  if (name) logW(name);
+}
+
+void setMinuteDotsTarget(uint8_t count) {
+  for (uint8_t i = 0; i < 4; i++) {
+    uint8_t idx = MIN_LEDS[i];
+    if (idx < NUM_LEDS) targetLeds[idx] = (i < count) ? WORD_COLOR : CRGB::Black;
+  }
+}
+
+/* ========== Debug dump ========== */
+void printDebugStatus(int hourVal, int minuteVal) {
+#if DEBUG_SERIAL
+  DateTime now = rtc.now();
+  Serial.println(F("---------------------------------"));
+  Serial.printf("RTC ahora: %02d:%02d:%02d  %02d/%02d/%04d\n",
+                now.hour(), now.minute(), now.second(),
+                now.day(), now.month(), now.year());
+  Serial.printf("Hora solicitada para render: %02d:%02d\n", hourVal, minuteVal);
+  Serial.print(F("Frase generada: "));
+  Serial.println(debugWords);
+
+  Serial.print(F("LEDs encendidos (sin WIFI_LEDS): "));
+  bool first = true;
+  for (int i = 0; i < NUM_LEDS; i++) {
+    if (targetLeds[i].r != 0 || targetLeds[i].g != 0 || targetLeds[i].b != 0) {
+      if (!first) Serial.print(", ");
+      Serial.print(i);
+      first = false;
+    }
+  }
+  Serial.println();
+  Serial.println(F("---------------------------------"));
+#endif
+}
+
+/* ========== Crossfade ========== */
+
+void crossFade(uint8_t steps = 45, uint16_t delayMs = 18) {
+  for (uint8_t s = 0; s <= steps; s++) {
+    uint8_t amt = (255 * s) / steps;
+    for (int i = 0; i < NUM_LEDS; i++) {
+      leds[i] = blend(leds[i], targetLeds[i], amt);
+    }
+    FastLED.show();
+    delay(delayMs);
+  }
+}
+
+/* ========== Time -> target builder ========== */
+
+void hour(uint8_t h) {
+  switch (h) {
+    case 1: setW(UNA, 3, "UNA"); break;
+    case 2: setW(DOS, 3, "DOS"); break;
+    case 3: setW(TRES, 4, "TRES"); break;
+    case 4: setW(CUATRO, 6, "CUATRO"); break;
+    case 5: setW(CINCO_H, 5, "CINCO_H"); break;
+    case 6: setW(SEIS, 4, "SEIS"); break;
+    case 7: setW(SIETE, 5, "SIETE"); break;
+    case 8: setW(OCHO, 4, "OCHO"); break;
+    case 9: setW(NUEVE, 5, "NUEVE"); break;
+    case 10: setW(DIEZ_H, 4, "DIEZ_H"); break;
+    case 11: setW(ONCE, 4, "ONCE"); break;
+    case 12: setW(DOCE, 4, "DOCE"); break;
+  }
+}
+
+bool isNightHour(uint8_t hour) {
+  if (nightStartHour == nightEndHour) return false;
+  if (nightStartHour < nightEndHour) {
+    return (hour >= nightStartHour && hour < nightEndHour);
+  } else {
+    return (hour >= nightStartHour || hour < nightEndHour);
+  }
+}
+
+void setSpanishIntro(uint8_t displayHour) {
+  if (displayHour == 1) {
+    setW(ES, 2, "ES");
+    setW(LA, 2, "LA");
+  } else {
+    setW(SON, 3, "SON");
+    setW(LAS, 3, "LAS");
+  }
+}
+
+void buildTimeTarget(int hourVal, int minuteVal) {
+
+  debugWords = "";  // reset de la frase de debug en cada construccion
+
+  uint8_t effectivePercent = isNightHour(hourVal) ? nightBrightPercent : dayBrightPercent;
+  uint8_t brightnessVal = map(effectivePercent, 0, 100, 0, 255);
+  FastLED.setBrightness(brightnessVal);
+
+  clearTarget();
+
+  uint8_t rounded = (minuteVal / 5) * 5;
+  uint8_t extra = minuteVal % 5;
+
+  uint8_t h = hourVal % 12;
+  if (h == 0) h = 12;
+
+  uint8_t nextHour = (h % 12) + 1;
+
+  switch (rounded) {
+
+    case 0:
+      setSpanishIntro(h);
+      hour(h);
+      break;
+
+    case 5:
+      setSpanishIntro(h);
+      hour(h);
+      setW(Y, 1, "Y");
+      setW(CINCO, 5, "CINCO");
+      break;
+
+    case 10:
+      setSpanishIntro(h);
+      hour(h);
+      setW(Y, 1, "Y");
+      setW(DIEZ, 4, "DIEZ");
+      break;
+
+    case 15:
+      setSpanishIntro(h);
+      hour(h);
+      setW(Y, 1, "Y");
+      setW(CUARTO, 6, "CUARTO");
+      break;
+
+    case 20:
+      setSpanishIntro(h);
+      hour(h);
+      setW(Y, 1, "Y");
+      setW(VEINTE, 6, "VEINTE");
+      break;
+
+    case 25:
+      setSpanishIntro(h);
+      hour(h);
+      setW(Y, 1, "Y");
+      setW(VEINTICINCO, 11, "VEINTICINCO");
+      break;
+
+    case 30:
+      setSpanishIntro(h);
+      hour(h);
+      setW(Y, 1, "Y");
+      setW(MEDIA, 5, "MEDIA");
+      break;
+
+    case 35:
+      setSpanishIntro(nextHour);
+      hour(nextHour);
+      setW(MENOS, 5, "MENOS");
+      setW(VEINTICINCO, 11, "VEINTICINCO");
+      break;
+
+    case 40:
+      setSpanishIntro(nextHour);
+      hour(nextHour);
+      setW(MENOS, 5, "MENOS");
+      setW(VEINTE, 6, "VEINTE");
+      break;
+
+    case 45:
+      setSpanishIntro(nextHour);
+      hour(nextHour);
+      setW(MENOS, 5, "MENOS");
+      setW(CUARTO, 6, "CUARTO");
+      break;
+
+    case 50:
+      setSpanishIntro(nextHour);
+      hour(nextHour);
+      setW(MENOS, 5, "MENOS");
+      setW(DIEZ, 4, "DIEZ");
+      break;
+
+    case 55:
+      setSpanishIntro(nextHour);
+      hour(nextHour);
+      setW(MENOS, 5, "MENOS");
+      setW(CINCO, 5, "CINCO");
+      break;
+  }
+
+  setMinuteDotsTarget(extra);
+
+  printDebugStatus(hourVal, minuteVal);
+}
+
+/* ========== Wifi / Captive portal helpers ========== */
+
+String makePageHtml() {
+  char colorHex[8];
+  sprintf(colorHex, "#%02X%02X%02X", WORD_COLOR.r, WORD_COLOR.g, WORD_COLOR.b);
+
+  DateTime now = rtc.now();
+  int curY = now.year();
+  int curM = now.month();
+  int curD = now.day();
+  int curH = now.hour();
+  int curMin = now.minute();
+
+  char rtcBuf[64];
+  sprintf(rtcBuf, "%02d.%02d.%04d %02d:%02d Uhr",
+          curD, curM, curY, curH, curMin);
+
+  String html = R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Word Clock Setup</title>
+<style>
+body{margin:0;background:#0f1115;color:#fff;font-family:system-ui,Arial;}
+.container{max-width:480px;margin:auto;padding:20px;}
+h1{text-align:center;}
+.card{background:#171a22;padding:18px;border-radius:16px;margin-bottom:18px;}
+label{font-size:16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.range-value{text-align:right;min-width:50px;}
+input[type=color]{width:100%;height:50px;border:none;}
+input[type=range]{width:100%;}
+select,input[type=number]{width:100%;height:48px;font-size:18px;}
+button{width:100%;background:#4da3ff;color:white;border:none;padding:16px;border-radius:14px;font-size:18px;}
+.secondary{background:#2f3748;}
+.rtc{text-align:center;background:#10131a;padding:12px;border-radius:10px;}
+.row{display:flex;gap:12px;}
+.hint{font-size:12px;color:#aaa;margin-top:6px;}
+.small-input{width:50%;}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Word Clock Setup</h1>
+<div class="card">
+<label>Color</label>
+<input id="col" type="color" value="%COL%">
+</div>
+<div class="card">
+<label>Brillo diurno<span class="range-value"><span id="dayv">%DAY%</span>%</span></label>
+<input id="day" type="range" min="0" max="100" value="%DAY%">
+</div>
+<div class="card">
+<label>Brillo nocturno<span class="range-value"><span id="nightv">%NIGHT%</span>%</span></label>
+<input id="night" type="range" min="0" max="100" value="%NIGHT%">
+</div>
+<div class="card">
+<label>Modo nocturno (de / a)</label>
+<div class="row">
+  <input id="ns" type="number" min="0" max="23" value="%NS%" class="small-input">
+  <input id="ne" type="number" min="0" max="23" value="%NE%" class="small-input">
+</div>
+<div class="hint">Ejemplo: de 22 a 6 (formato de 24 horas)</div>
+</div>
+<div class="card">
+<label>Tiempo ahorrado</label>
+<div class="rtc">%RTC%</div>
+<button class="secondary" onclick="setTime()">Sincronizar desde el telefono</button>
+</div>
+<button onclick="save()">Guardar y reiniciar</button>
+<script>
+document.getElementById('day').oninput = function(){ document.getElementById('dayv').innerText = this.value; }
+document.getElementById('night').oninput = function(){ document.getElementById('nightv').innerText = this.value; }
+function save(){
+  var color = document.getElementById('col').value;
+  var day = document.getElementById('day').value;
+  var night = document.getElementById('night').value;
+  var ns = document.getElementById('ns').value;
+  var ne = document.getElementById('ne').value;
+  var url = '/save?c=' + encodeURIComponent(color) + '&day=' + day + '&night=' + night + '&ns=' + ns + '&ne=' + ne
+  fetch(url).then(r=>r.text()).then(t=>document.body.innerHTML = t);
+}
+function setTime(){
+  try {
+    let now = new Date();
+    let url = "/settime?" + "y="  + now.getFullYear() + "&mo=" + (now.getMonth()+1) + "&da=" + now.getDate()
+      + "&h="  + now.getHours() + "&mi=" + now.getMinutes() + "&s="  + now.getSeconds();
+    fetch(url).then(r => r.text()).then(t => location.reload());
+  } catch(e){ alert("Error al leer la hora"); }
+}
+</script>
+</div>
+</body>
+</html>
+)rawliteral";
+
+  html.replace("%COL%", String(colorHex));
+  html.replace("%DAY%", String(dayBrightPercent));
+  html.replace("%NIGHT%", String(nightBrightPercent));
+  html.replace("%NS%", String(nightStartHour));
+  html.replace("%NE%", String(nightEndHour));
+  html.replace("%Y%", String(curY));
+  html.replace("%M%", String(curM));
+  html.replace("%D%", String(curD));
+  html.replace("%H%", String(curH));
+  html.replace("%MIN%", String(curMin));
+  html.replace("%RTC%", String(rtcBuf));
+
+  return html;
+}
+
+void handleRoot() {
+  server.send(200, "text/html", makePageHtml());
+}
+
+void handleGenerate204() {
+  server.send(200, "text/plain", "OK");
+}
+
+void handleSave() {
+  if (server.hasArg("c")) {
+    String c = server.arg("c");
+    if (c.length() == 7 && c[0] == '#') {
+      long v = strtol(c.substring(1).c_str(), NULL, 16);
+      WORD_COLOR = CRGB((v >> 16) & 255, (v >> 8) & 255, v & 255);
+    }
+  }
+  if (server.hasArg("day")) {
+    int d = server.arg("day").toInt();
+    if (d < 0) d = 0;
+    if (d > 100) d = 100;
+    dayBrightPercent = d;
+  }
+  if (server.hasArg("night")) {
+    int n = server.arg("night").toInt();
+    if (n < 0) n = 0;
+    if (n > 100) n = 100;
+    nightBrightPercent = n;
+  }
+  if (server.hasArg("ns")) {
+    int ns = server.arg("ns").toInt();
+    if (ns < 0) ns = 0;
+    if (ns > 23) ns = 23;   // <-- FIX: antes era "= 0"
+    nightStartHour = ns;
+  }
+  if (server.hasArg("ne")) {
+    int ne = server.arg("ne").toInt();
+    if (ne < 0) ne = 0;
+    if (ne > 23) ne = 23;   // <-- FIX: antes era "= 0"
+    nightEndHour = ne;
+  }
+
+  bool gotDate = false;
+  int y = 0, mo = 0, da = 0, hh = 0, mm = 0;
+  if (server.hasArg("y") && server.hasArg("mo") && server.hasArg("da") && server.hasArg("h") && server.hasArg("mi")) {
+    y = server.arg("y").toInt();
+    mo = server.arg("mo").toInt();
+    da = server.arg("da").toInt();
+    hh = server.arg("h").toInt();
+    mm = server.arg("mi").toInt();
+    if (y >= 2000 && y <= 2099 && mo >= 1 && mo <= 12 && da >= 1 && da <= 31 && hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59) {
+      gotDate = true;
+    }
+  }
+
+  prefs.begin("wortuhr", false);
+  prefs.putUChar(P_DB, dayBrightPercent);
+  prefs.putUChar(P_NB, nightBrightPercent);
+  prefs.putUChar(P_NS, nightStartHour);
+  prefs.putUChar(P_NE, nightEndHour);
+  prefs.putUChar(P_R, WORD_COLOR.r);
+  prefs.putUChar(P_G, WORD_COLOR.g);
+  prefs.putUChar(P_B, WORD_COLOR.b);
+  prefs.end();
+
+  if (gotDate) {
+    rtc.adjust(DateTime(y, mo, da, hh, mm, 0));
+  }
+
+#if DEBUG_SERIAL
+  Serial.println(F("=== Configuracion guardada ==="));
+  Serial.printf("Color: #%02X%02X%02X\n", WORD_COLOR.r, WORD_COLOR.g, WORD_COLOR.b);
+  Serial.printf("Brillo dia/noche: %d%% / %d%%\n", dayBrightPercent, nightBrightPercent);
+  Serial.printf("Noche: %02d a %02d\n", nightStartHour, nightEndHour);
+  if (gotDate) Serial.printf("RTC ajustado a: %04d-%02d-%02d %02d:%02d\n", y, mo, da, hh, mm);
+#endif
+
+  server.send(200, "text/html",
+              "<html><body style='background:#111;color:white;text-align:center;font-family:Arial'>"
+              "<h2>Guardado!</h2><p>El reloj se reinicia...</p></body></html>");
+
+  delay(900);
+  dnsServer.stop();
+  WiFi.softAPdisconnect(true);
+  delay(200);
+  ESP.restart();
+}
+
+void handleSetTime() {
+  if (server.hasArg("y") && server.hasArg("mo") && server.hasArg("da") && server.hasArg("h") && server.hasArg("mi") && server.hasArg("s")) {
+
+    int y = server.arg("y").toInt();
+    int mo = server.arg("mo").toInt();
+    int da = server.arg("da").toInt();
+    int h = server.arg("h").toInt();
+    int mi = server.arg("mi").toInt();
+    int s = server.arg("s").toInt();
+
+    rtc.adjust(DateTime(y, mo, da, h, mi, s));
+
+#if DEBUG_SERIAL
+    Serial.printf("RTC fijado via /settime: %04d-%02d-%02d %02d:%02d:%02d\n", y, mo, da, h, mi, s);
+#endif
+
+    server.send(200, "text/plain", "OK");
+    return;
+  }
+  server.send(400, "text/plain", "BAD");
+}
+
+void handleNotFound() {
+  IPAddress apIP = WiFi.softAPIP();
+  server.sendHeader("Location", String("http://") + apIP.toString() + "/", true);
+  server.send(302, "text/plain", "");
+}
+
+/* ========== Preferences load ========== */
+void loadSettings() {
+  prefs.begin("wortuhr", true);
+  dayBrightPercent = prefs.getUChar(P_DB, DEFAULT_DAY_BRI_PERCENT);
+  nightBrightPercent = prefs.getUChar(P_NB, DEFAULT_NIGHT_BRI_PERCENT);
+  nightStartHour = prefs.getUChar(P_NS, DEFAULT_NIGHT_START);
+  nightEndHour = prefs.getUChar(P_NE, DEFAULT_NIGHT_END);
+  uint8_t r = prefs.getUChar(P_R, DEFAULT_COLOR.r);
+  uint8_t g = prefs.getUChar(P_G, DEFAULT_COLOR.g);
+  uint8_t b = prefs.getUChar(P_B, DEFAULT_COLOR.b);
+  WORD_COLOR = CRGB(r, g, b);
+  prefs.end();
+
+#if DEBUG_SERIAL
+  Serial.println(F("=== Configuracion cargada de NVS ==="));
+  Serial.printf("Color: #%02X%02X%02X\n", WORD_COLOR.r, WORD_COLOR.g, WORD_COLOR.b);
+  Serial.printf("Brillo dia/noche: %d%% / %d%%\n", dayBrightPercent, nightBrightPercent);
+  Serial.printf("Noche: %02d a %02d\n", nightStartHour, nightEndHour);
+#endif
+}
+
+/* ========== Start AP & DNS & Webserver ========== */
+void startAP() {
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP("WORDCLOCK-SETUP");
+
+  apStartTime = millis();
+  apActive = true;
+  clientConnected = false;
+  pulseValue = 10;
+  pulseDir = 8;
+
+  IPAddress apIP = WiFi.softAPIP();
+  dnsServer.start(DNS_PORT, "*", apIP);
+
+  server.on("/", handleRoot);
+  server.on("/generate_204", handleGenerate204);
+  server.on("/fwlink", handleGenerate204);
+  server.on("/save", handleSave);
+  server.on("/settime", handleSetTime);
+  server.onNotFound(handleNotFound);
+  server.begin();
+
+#if DEBUG_SERIAL
+  Serial.print(F("AP iniciado. IP: "));
+  Serial.println(apIP);
+#endif
+}
+
+/* ========== Update status LEDs (apActive / clientConnected) ========== */
+void applyWifiStatusVisuals() {
+  if (apActive) {
+    int stations = WiFi.softAPgetStationNum();
+    if (stations > 0) {
+      for (uint8_t i = 0; i < 4; i++) {
+        uint8_t idx = WIFI_LEDS[i];
+        if (idx < NUM_LEDS) leds[idx] = CRGB(0, 120, 255);
+      }
+      return;
+    } else {
+      pulseValue += pulseDir;
+      if (pulseValue >= 200 || pulseValue <= 6) pulseDir = -pulseDir;
+      uint8_t pv = constrain(pulseValue, 0, 255);
+      for (uint8_t i = 0; i < 4; i++) {
+        uint8_t idx = WIFI_LEDS[i];
+        if (idx < NUM_LEDS) leds[idx] = CRGB(0, 0, pv);
+      }
+      return;
+    }
+  } else {
+    for (uint8_t i = 0; i < 4; i++) {
+      uint8_t idx = WIFI_LEDS[i];
+      if (idx < NUM_LEDS) leds[idx] = CRGB::Black;
+    }
+  }
+}
+
+/* ========== Core time show wrapper ========== */
+int lastMinute = -1;
+
+void showTimeAndFade(int h, int m) {
+  buildTimeTarget(h, m);
+  crossFade();
+  applyWifiStatusVisuals();
+  FastLED.show();
+}
+
+void startAnimation() {
+  FastLED.setBrightness(120);
+
+  fill_solid(leds, NUM_LEDS, CRGB::Black);
+  FastLED.show();
+
+  uint8_t order[NUM_LEDS];
+  for (int i = 0; i < NUM_LEDS; i++) order[i] = i;
+
+  for (int i = NUM_LEDS - 1; i > 0; i--) {
+    int j = random(i + 1);
+    uint8_t t = order[i];
+    order[i] = order[j];
+    order[j] = t;
+  }
+
+  for (int i = 0; i < NUM_LEDS; i++) {
+    leds[order[i]] = CHSV(random8(), 255, 200);
+    FastLED.show();
+    delay(35);
+  }
+
+  delay(500);
+
+  for (int b = 200; b >= 0; b -= 5) {
+    FastLED.setBrightness(b);
+    FastLED.show();
+    delay(20);
+  }
+
+  FastLED.setBrightness(255);
+  fill_solid(leds, NUM_LEDS, CRGB::Black);
+  FastLED.show();
+}
+
+/* ========== Setup & loop ========== */
+
+void setup() {
+  Serial.begin(115200);
+  delay(50);
+
+  FastLED.addLeds<WS2812, DATA_PIN, GRB>(leds, NUM_LEDS);
+  fill_solid(leds, NUM_LEDS, CRGB::Black);
+  fill_solid(targetLeds, NUM_LEDS, CRGB::Black);
+
+  Wire.begin();
+  if (!rtc.begin()) {
+    Serial.println(F("ERROR: RTC DS3231 no detectado en el bus I2C!"));
+  }
+
+  if (rtc.lostPower()) {
+    Serial.println(F("RTC perdio la alimentacion, ajustando a hora de compilacion."));
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  }
+
+  loadSettings();
+
+  startAnimation();
+
+  startAP();
+
+  DateTime now = rtc.now();
+  lastMinute = now.minute();
+  buildTimeTarget(now.hour(), now.minute());
+  crossFade(18, 12);
+
+  applyWifiStatusVisuals();
+  FastLED.show();
+}
+
+void loop() {
+  dnsServer.processNextRequest();
+  server.handleClient();
+
+  if (apActive) {
+    int stations = WiFi.softAPgetStationNum();
+    if (stations > 0) {
+      clientConnected = true;
+    }
+
+    if (!clientConnected && (millis() - apStartTime > 60000UL)) {
+      dnsServer.stop();
+      WiFi.softAPdisconnect(true);
+      apActive = false;
+      clientConnected = false;
+      for (uint8_t i = 0; i < 4; i++) {
+        if (WIFI_LEDS[i] < NUM_LEDS) leds[WIFI_LEDS[i]] = CRGB::Black;
+      }
+      FastLED.show();
+#if DEBUG_SERIAL
+      Serial.println(F("AP apagado: timeout sin clientes."));
+#endif
+    }
+
+    if (clientConnected && (WiFi.softAPgetStationNum() == 0) && (millis() - apStartTime > 500)) {
+      dnsServer.stop();
+      WiFi.softAPdisconnect(true);
+      apActive = false;
+      clientConnected = false;
+      for (uint8_t i = 0; i < 4; i++) {
+        if (WIFI_LEDS[i] < NUM_LEDS) leds[WIFI_LEDS[i]] = CRGB::Black;
+      }
+      FastLED.show();
+#if DEBUG_SERIAL
+      Serial.println(F("AP apagado: cliente se desconecto."));
+#endif
+    }
+  }
+
+  applyWifiStatusVisuals();
+
+  DateTime now = rtc.now();
+  if (now.minute() != lastMinute) {
+    lastMinute = now.minute();
+    showTimeAndFade(now.hour(), now.minute());
+  } else {
+    FastLED.show();
+  }
+
+  delay(80);
+}

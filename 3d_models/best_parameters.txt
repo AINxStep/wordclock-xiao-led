@@ -1,0 +1,7 @@
+Quality - Line width - Top Surface: 0.36
+Quality - Advanced - Top surface flow ratio: 1.01
+Strength - top/bottom shells - Internal Solid infill pattern : Monotonic Line
+Speed - Other Layers Speed - Top Surface: 70 mm/s
+
+
+2.8.2.61
