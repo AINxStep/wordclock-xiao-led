@@ -215,6 +215,9 @@ Dentro de `3d_models/` se encuentran los modelos paramétricos en OpenSCAD y los
 
 Consulta `3d_models/best_parameters.txt` para los ajustes de capa, ancho de línea y patrones de relleno recomendados en Bambu Studio.
 
+> [!TIP]
+> **Proyecto listo para Bambu Studio**: Si utilizas una impresora Bambu Lab (o Bambu Studio / OrcaSlicer), puedes abrir directamente el archivo de proyecto preconfigurado [`3d_models/opcion_2_tapa_incrustada_al_ras/wordclock.3mf`](3d_models/opcion_2_tapa_incrustada_al_ras/wordclock.3mf). Contiene las bandejas organizadas, orientaciones óptimas de piezas, asignación de filamentos y parámetros de laminación listos para imprimir con un clic.
+
 ---
 
 ## Licencia

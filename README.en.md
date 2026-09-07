@@ -214,6 +214,9 @@ Within `3d_models/`, you will find both parametric OpenSCAD scripts and ready-to
 
 Refer to `3d_models/best_parameters.txt` for recommended layer heights, line widths, and infill profiles in Bambu Studio.
 
+> [!TIP]
+> **Ready-to-Print Bambu Studio Project**: If you use a Bambu Lab printer (or Bambu Studio / OrcaSlicer), open the pre-configured project file [`3d_models/opcion_2_tapa_incrustada_al_ras/wordclock.3mf`](3d_models/opcion_2_tapa_incrustada_al_ras/wordclock.3mf). It features pre-arranged build plates, optimal print orientations, material assignments, and slicing parameters ready for one-click printing.
+
 ---
 
 ## License
