@@ -199,22 +199,7 @@ Fila 14 (154-157): Puntos de minutos (+1, +2, +3, +4)
 4. Selecciona la placa **Seeed Studio XIAO ESP32C6** y el puerto correspondiente.
 5. Compila y carga el código.
 
-### 3. Configuración Inicial y Portal WiFi
-
-Al conectar el reloj a la alimentación USB, la palabra **WIFI** pulsa suavemente durante los primeros **60 segundos**, indicando que la red de configuración está activa y lista para recibir conexiones.
-
-1. **Conéctate a la red**: Desde tu teléfono o computadora, conéctate a la red WiFi **`WORDCLOCK-SETUP`** (red abierta, sin contraseña).
-2. **Accede al portal**: Se abrirá automáticamente la ventana del portal cautivo. Si no aparece sola, entra desde el navegador a `http://192.168.4.1`.
-3. **Ajusta tus preferencias**:
-   * **Sincronizar hora**: Presiona el botón para transferir al instante la hora y fecha exacta de tu teléfono al chip RTC (Grove DS1307).
-   * **Color y brillo**: Elige el color de las palabras y gradúa el brillo diurno y nocturno (optimizado con corrección Gamma 2.2).
-   * **Horario nocturno**: Define el intervalo de horas para el modo tenue (ej. 22:00 a 06:00).
-4. **Guarda**: Presiona **"Guardar Configuración"**. Los ajustes se aplican de inmediato y se almacenan en la memoria permanente (NVS) del ESP32.
-
-> [!NOTE]
-> **Modo normal y reconfiguración**: Si pasan 60 segundos sin conexión o en cuanto te desconectas del portal, la antena WiFi y la palabra **WIFI** se apagan por completo para no emitir radiofrecuencia. Para volver a abrir el portal de configuración en el futuro, simplemente **desconecta y vuelve a conectar el cable de alimentación USB**.
-
-### 4. Impresión 3D y Ensamble
+### 3. Impresión 3D y Ensamble
 
 <p align="center">
   <img src="docs/images/wordclock-angle.jpg" alt="Despiece y ensamble 3D de WordClock" width="650">
@@ -232,6 +217,21 @@ Consulta `3d_models/best_parameters.txt` para los ajustes de capa, ancho de lín
 
 > [!TIP]
 > **Proyecto listo para Bambu Studio**: Si utilizas una impresora Bambu Lab (o Bambu Studio / OrcaSlicer), puedes abrir directamente el archivo de proyecto preconfigurado [`3d_models/opcion_2_tapa_incrustada_al_ras/wordclock.3mf`](3d_models/opcion_2_tapa_incrustada_al_ras/wordclock.3mf). Contiene las bandejas organizadas, orientaciones óptimas de piezas, asignación de filamentos y parámetros de laminación listos para imprimir con un clic.
+
+### 4. Configuración Inicial y Portal WiFi
+
+Al conectar el reloj a la alimentación USB, la palabra **WIFI** pulsa suavemente durante los primeros **60 segundos**, indicando que la red de configuración está activa y lista para recibir conexiones.
+
+1. **Conéctate a la red**: Desde tu teléfono o computadora, conéctate a la red WiFi **`WORDCLOCK-SETUP`** (red abierta, sin contraseña).
+2. **Accede al portal**: Se abrirá automáticamente la ventana del portal cautivo. Si no aparece sola, entra desde el navegador a `http://192.168.4.1`.
+3. **Ajusta tus preferencias**:
+   * **Sincronizar hora**: Presiona el botón para transferir al instante la hora y fecha exacta de tu teléfono al chip RTC (Grove DS1307).
+   * **Color y brillo**: Elige el color de las palabras y gradúa el brillo diurno y nocturno (optimizado con corrección Gamma 2.2).
+   * **Horario nocturno**: Define el intervalo de horas para el modo tenue (ej. 22:00 a 06:00).
+4. **Guarda**: Presiona **"Guardar Configuración"**. Los ajustes se aplican de inmediato y se almacenan en la memoria permanente (NVS) del ESP32.
+
+> [!NOTE]
+> **Modo normal y reconfiguración**: Si pasan 60 segundos sin conexión o en cuanto te desconectas del portal, la antena WiFi y la palabra **WIFI** se apagan por completo para no emitir radiofrecuencia. Para volver a abrir el portal de configuración en el futuro, simplemente **desconecta y vuelve a conectar el cable de alimentación USB**.
 
 ---
 
