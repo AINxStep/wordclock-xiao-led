@@ -116,6 +116,12 @@ uint8_t lastMinute = 255;
 /* Índices LED de estado para la palabra "WIFI" (final de la Fila 4: 51, 52, 53, 54) */
 const uint8_t WIFI_LEDS[4] = { 51, 52, 53, 54 };
 
+/* ========== Estado de Transición No Bloqueante entre Palabras ========== */
+CRGB previousLeds[NUM_LEDS];
+bool inTransition = false;
+unsigned long transitionStartTime = 0;
+const unsigned long TRANSITION_DURATION_MS = 800; // 800 ms de fundido cruzado perceptual suave
+
 /* ========== DEPURACIÓN ========== */
 #define DEBUG_SERIAL 1   // Cambiar a 0 para deshabilitar mensajes por el puerto serial
 String debugWords = "";  // Reconstruido en cada llamada a buildTimeTarget()
@@ -310,17 +316,15 @@ void printDebugStatus(int hourVal, int minuteVal) {
 #endif
 }
 
-/* ========== Animación de Transición Suave (Crossfade con S-Curve Perceptual) ========== */
-void crossFade(uint8_t steps = 45, uint16_t delayMs = 18) {
-  for (uint8_t s = 0; s <= steps; s++) {
-    uint8_t linearAmt = (255 * s) / steps;
-    uint8_t perceptualAmt = ease8InOut(linearAmt);
-    for (int i = 0; i < NUM_LEDS; i++) {
-      leds[i] = blend(leds[i], targetLeds[i], perceptualAmt);
-    }
-    FastLED.show();
-    delay(delayMs);
+/* ========== Transición Suave No Bloqueante entre Palabras ========== */
+void startWordTransition(int hourVal, int minuteVal) {
+  // Almacenar el estado actual de cada LED de la hora (excluyendo WIFI)
+  for (int i = 0; i < NUM_LEDS; i++) {
+    previousLeds[i] = isWifiLed(i) ? CRGB::Black : leds[i];
   }
+  buildTimeTarget(hourVal, minuteVal);
+  transitionStartTime = millis();
+  inTransition = true;
 }
 
 /* ========== Función Auxiliar de Mapeo de Horas ========== */
@@ -785,12 +789,12 @@ void handleSave() {
   // Reconstruir objetivo y copiar INMEDIATAMENTE al búfer físico de LEDs
   DateTime now = getValidRtcDateTime();
   buildTimeTarget(now.hour(), now.minute());
+  inTransition = false;
 
   for (int i = 0; i < NUM_LEDS; i++) {
-    leds[i] = targetLeds[i];
+    if (!isWifiLed(i)) leds[i] = targetLeds[i];
   }
-  applyWifiStatusVisuals();
-  FastLED.show();
+  updateLedsNonBlocking();
 
 #if DEBUG_SERIAL
   Serial.printf("[HTTP CONFIG] Cambios de color/brillo aplicados INSTANTANEAMENTE: RGB=(%d,%d,%d), Brillo Día=%d%%\n",
@@ -818,7 +822,11 @@ void handleSetTime() {
 
     lastMinute = min;
     buildTimeTarget(h, min);
-    FastLED.show();
+    inTransition = false;
+    for (int i = 0; i < NUM_LEDS; i++) {
+      if (!isWifiLed(i)) leds[i] = targetLeds[i];
+    }
+    updateLedsNonBlocking();
 
 #if DEBUG_SERIAL
     Serial.printf("[HTTP] Hora sincronizada en el Grove DS1307 desde el teléfono: %02d:%02d:%02d %02d/%02d/%04d\n",
@@ -875,17 +883,17 @@ void handleBuiltinLedStatus() {
 void applyWifiStatusVisuals() {
   if (apActive) {
     // Curva de respiración fisiológica inspirada en la patente de Apple (US 6,658,577 B2)
-    // Periodo: ~3.8 s (~15.8 respiraciones/minuto: inhalación natural, meseta superior y exhalación)
-    unsigned long nowMs = millis();
-    float phase = (float)(nowMs % 3800) * (2.0f * 3.14159265f / 3800.0f);
-    float s = sinf(phase - 1.57079632f); // Desfase para iniciar en la base relajada de la respiración
+    // Sincronizada con apStartTime para iniciar suavemente desde la oscuridad absoluta (brillo 0)
+    unsigned long elapsed = millis() - apStartTime;
+    float phase = (float)(elapsed % 3800) * (2.0f * 3.14159265f / 3800.0f);
+    float s = sinf(phase - 1.57079632f); // Desfase para iniciar en s = -1 (mínimo de la onda)
     // Curva normalizada (0.0 a 1.0): (exp(s) - 1/e) / (e - 1/e)
     float breath = (expf(s) - 0.3678794f) * 0.425459f;
     if (breath < 0.0f) breath = 0.0f;
     if (breath > 1.0f) breath = 1.0f;
 
-    // Rango de brillo: 12 (mínimo visible) a 240 (máximo confortable)
-    uint8_t pulseVal = 12 + (uint8_t)(breath * 228.0f);
+    // Rango de brillo: inicia en 0 (apagado) y crece gradualmente hasta 240
+    uint8_t pulseVal = (uint8_t)(breath * 240.0f);
 
     CRGB compColor = CRGB(255 - WORD_COLOR.r, 255 - WORD_COLOR.g, 255 - WORD_COLOR.b);
     if (compColor.r < 40 && compColor.g < 40 && compColor.b < 40) {
@@ -904,9 +912,40 @@ void applyWifiStatusVisuals() {
   }
 }
 
-void showTimeAndFade(int h, int m) {
-  buildTimeTarget(h, m);
-  crossFade(40, 15);
+/* ========== Renderizado por Capas No Bloqueante (~50 FPS) ========== */
+void updateLedsNonBlocking() {
+  // Capa 1: Palabras de la Hora (Base)
+  if (inTransition) {
+    unsigned long elapsed = millis() - transitionStartTime;
+    if (elapsed >= TRANSITION_DURATION_MS) {
+      inTransition = false;
+      for (int i = 0; i < NUM_LEDS; i++) {
+        if (!isWifiLed(i)) {
+          leds[i] = targetLeds[i];
+        }
+      }
+    } else {
+      uint8_t linearAmt = (elapsed * 255UL) / TRANSITION_DURATION_MS;
+      uint8_t perceptualAmt = ease8InOut(linearAmt);
+      for (int i = 0; i < NUM_LEDS; i++) {
+        if (!isWifiLed(i)) {
+          leds[i] = blend(previousLeds[i], targetLeds[i], perceptualAmt);
+        }
+      }
+    }
+  } else {
+    for (int i = 0; i < NUM_LEDS; i++) {
+      if (!isWifiLed(i)) {
+        leds[i] = targetLeds[i];
+      }
+    }
+  }
+
+  // Capa 2: Estado WiFi (Superpuesta, independiente y sin interferir con la hora)
+  applyWifiStatusVisuals();
+
+  // Envío al búfer físico de la tira
+  FastLED.show();
 }
 
 /* ========== Animación de Inicio (Lluvia Matrix Multicolor que REVELA las palabras al final) ========== */
@@ -1036,8 +1075,7 @@ void setup() {
   }
   startAP();
 
-  applyWifiStatusVisuals();
-  FastLED.show();
+  updateLedsNonBlocking();
 }
 
 void loop() {
@@ -1076,16 +1114,18 @@ void loop() {
     }
   }
 
-  applyWifiStatusVisuals();
-
-  // Bucle de tiempo (comprobación de cambio de minuto)
-  DateTime now = getValidRtcDateTime();
-  if (now.minute() != lastMinute) {
-    lastMinute = now.minute();
-    showTimeAndFade(now.hour(), now.minute());
-  } else {
-    FastLED.show();
+  // Bucle de tiempo (comprobación no bloqueante del RTC cada 250 ms)
+  static unsigned long lastRtcCheck = 0;
+  if (millis() - lastRtcCheck >= 250) {
+    lastRtcCheck = millis();
+    DateTime now = getValidRtcDateTime();
+    if (now.minute() != lastMinute) {
+      lastMinute = now.minute();
+      startWordTransition(now.hour(), now.minute());
+    }
   }
 
-  delay(60);
+  // Renderizado continuo por capas a ~50 FPS
+  updateLedsNonBlocking();
+  delay(20);
 }
