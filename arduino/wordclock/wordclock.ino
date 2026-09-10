@@ -62,14 +62,49 @@ const char *P_R = "rc";
 const char *P_G = "gc";
 const char *P_B = "bc";
 
+/* ========== Corrección Gamma 2.2 y Modelado Perceptual Humano ========== */
+// Mapea porcentajes/valores lineales (0-255) a emisión óptica percibida como lineal (Ley de Stevens)
+const uint8_t PROGMEM GAMMA8[256] = {
+    0,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
+    1,   1,   1,   1,   1,   1,   1,   1,   1,   2,   2,   2,   2,   2,   2,   2,
+    3,   3,   3,   3,   3,   4,   4,   4,   4,   5,   5,   5,   5,   6,   6,   6,
+    6,   7,   7,   7,   8,   8,   8,   9,   9,   9,  10,  10,  11,  11,  11,  12,
+   12,  13,  13,  13,  14,  14,  15,  15,  16,  16,  17,  17,  18,  18,  19,  19,
+   20,  20,  21,  22,  22,  23,  23,  24,  25,  25,  26,  26,  27,  28,  28,  29,
+   30,  30,  31,  32,  33,  33,  34,  35,  35,  36,  37,  38,  39,  39,  40,  41,
+   42,  43,  43,  44,  45,  46,  47,  48,  49,  49,  50,  51,  52,  53,  54,  55,
+   56,  57,  58,  59,  60,  61,  62,  63,  64,  65,  66,  67,  68,  69,  70,  71,
+   73,  74,  75,  76,  77,  78,  79,  81,  82,  83,  84,  85,  87,  88,  89,  90,
+   91,  93,  94,  95,  97,  98,  99, 100, 102, 103, 105, 106, 107, 109, 110, 111,
+  113, 114, 116, 117, 119, 120, 121, 123, 124, 126, 127, 129, 130, 132, 133, 135,
+  137, 138, 140, 141, 143, 145, 146, 148, 149, 151, 153, 154, 156, 158, 159, 161,
+  163, 165, 166, 168, 170, 172, 173, 175, 177, 179, 181, 182, 184, 186, 188, 190,
+  192, 194, 196, 197, 199, 201, 203, 205, 207, 209, 211, 213, 215, 217, 219, 221,
+  223, 225, 227, 229, 231, 234, 236, 238, 240, 242, 244, 246, 248, 251, 253, 255
+};
+
+// Conversión perceptual de porcentaje de brillo (0-100%) a escala PWM con corrección Gamma
+inline uint8_t perceptualBrightness(uint8_t percent) {
+  if (percent == 0) return 0;
+  if (percent > 100) percent = 100;
+  uint8_t raw = map(percent, 0, 100, 0, 255);
+  return pgm_read_byte(&GAMMA8[raw]);
+}
+
+// Suavizado sigmoide cuadrático (S-Curve) para transiciones fluidas de entrada y salida
+inline uint8_t ease8InOut(uint8_t i) {
+  if (i < 128) {
+    return ((uint16_t)i * i) >> 7;
+  } else {
+    uint8_t j = 255 - i;
+    return 255 - (((uint16_t)j * j) >> 7);
+  }
+}
+
 /* ========== Estado de Configuración WiFi / Modo AP ========== */
 bool apActive = false;
 bool clientConnected = false;
 unsigned long apStartTime = 0;
-
-/* Variables para el efecto de pulsación */
-int pulseValue = 10;
-int pulseDir = 6;
 
 /* LED parpadeo integrado */
 unsigned long lastBuiltinBlink = 0;
@@ -275,12 +310,13 @@ void printDebugStatus(int hourVal, int minuteVal) {
 #endif
 }
 
-/* ========== Animación de Transición Suave (Crossfade) ========== */
+/* ========== Animación de Transición Suave (Crossfade con S-Curve Perceptual) ========== */
 void crossFade(uint8_t steps = 45, uint16_t delayMs = 18) {
   for (uint8_t s = 0; s <= steps; s++) {
-    uint8_t amt = (255 * s) / steps;
+    uint8_t linearAmt = (255 * s) / steps;
+    uint8_t perceptualAmt = ease8InOut(linearAmt);
     for (int i = 0; i < NUM_LEDS; i++) {
-      leds[i] = blend(leds[i], targetLeds[i], amt);
+      leds[i] = blend(leds[i], targetLeds[i], perceptualAmt);
     }
     FastLED.show();
     delay(delayMs);
@@ -318,9 +354,9 @@ bool isNightHour(uint8_t hour) {
 void buildTimeTarget(int hourVal, int minuteVal) {
   debugWords = "";
 
-  // Ajuste automático de brillo Día/Noche
+  // Ajuste automático de brillo Día/Noche con Corrección Gamma
   uint8_t effectivePercent = isNightHour(hourVal) ? nightBrightPercent : dayBrightPercent;
-  uint8_t brightnessVal = map(effectivePercent, 0, 100, 0, 255);
+  uint8_t brightnessVal = perceptualBrightness(effectivePercent);
   FastLED.setBrightness(brightnessVal);
 
   clearTarget();
@@ -838,17 +874,25 @@ void handleBuiltinLedStatus() {
 
 void applyWifiStatusVisuals() {
   if (apActive) {
-    pulseValue += pulseDir;
-    if (pulseValue >= 240 || pulseValue <= 15) {
-      pulseDir = -pulseDir;
-    }
+    // Curva de respiración fisiológica inspirada en la patente de Apple (US 6,658,577 B2)
+    // Periodo: ~3.8 s (~15.8 respiraciones/minuto: inhalación natural, meseta superior y exhalación)
+    unsigned long nowMs = millis();
+    float phase = (float)(nowMs % 3800) * (2.0f * 3.14159265f / 3800.0f);
+    float s = sinf(phase - 1.57079632f); // Desfase para iniciar en la base relajada de la respiración
+    // Curva normalizada (0.0 a 1.0): (exp(s) - 1/e) / (e - 1/e)
+    float breath = (expf(s) - 0.3678794f) * 0.425459f;
+    if (breath < 0.0f) breath = 0.0f;
+    if (breath > 1.0f) breath = 1.0f;
+
+    // Rango de brillo: 12 (mínimo visible) a 240 (máximo confortable)
+    uint8_t pulseVal = 12 + (uint8_t)(breath * 228.0f);
 
     CRGB compColor = CRGB(255 - WORD_COLOR.r, 255 - WORD_COLOR.g, 255 - WORD_COLOR.b);
     if (compColor.r < 40 && compColor.g < 40 && compColor.b < 40) {
       compColor = CRGB(0, 190, 255);
     }
     CRGB pulsedColor = compColor;
-    pulsedColor.nscale8_video(pulseValue);
+    pulsedColor.nscale8_video(pulseVal);
 
     for (uint8_t i = 0; i < 4; i++) {
       leds[WIFI_LEDS[i]] = pulsedColor;
@@ -985,6 +1029,11 @@ void setup() {
   buildTimeTarget(now.hour(), now.minute());
 
   startAnimation();
+  // Restaurar el nivel de brillo Día/Noche y palabras tras la animación Matrix
+  buildTimeTarget(now.hour(), now.minute());
+  for (int i = 0; i < NUM_LEDS; i++) {
+    leds[i] = targetLeds[i];
+  }
   startAP();
 
   applyWifiStatusVisuals();
