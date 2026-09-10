@@ -198,7 +198,22 @@ Row 14 (154-157): Minute Dots (+1, +2, +3, +4)
 4. Select board **Seeed Studio XIAO ESP32C6** and your USB serial port.
 5. Compile and upload.
 
-### 3. 3D Printing and Assembly
+### 3. Initial Setup and WiFi Portal
+
+When connecting the clock to USB power, the word **WIFI** pulses gently during the first **60 seconds**, indicating that the configuration access point is active and ready for incoming connections.
+
+1. **Connect to the network**: From your phone or computer, connect to the WiFi network **`WORDCLOCK-SETUP`** (open network, no password required).
+2. **Access the portal**: A captive portal window will appear automatically. If it does not, open your browser and navigate to `http://192.168.4.1`.
+3. **Customize your preferences**:
+   * **Sync Time**: Tap the sync button to instantly write your phone's exact date and time to the Grove DS1307 RTC chip.
+   * **Color & Brightness**: Pick the word display color and adjust day and night brightness levels (backed by Gamma 2.2 perceptual correction).
+   * **Night Schedule**: Set the start and end hours for the dimmed night mode (e.g., 22:00 to 06:00).
+4. **Save**: Tap **"Guardar Configuración"**. Settings apply immediately and are persisted into the ESP32's non-volatile storage (NVS).
+
+> [!NOTE]
+> **Normal Operation & Reconfiguration**: After 60 seconds without connection or as soon as you disconnect, the WiFi radio and the word **WIFI** turn off completely to eliminate RF emissions. To reopen the configuration portal in the future, simply **unplug and reconnect the USB power cable**.
+
+### 4. 3D Printing and Assembly
 
 <p align="center">
   <img src="docs/images/wordclock-angle.jpg" alt="Exploded 3D CAD assembly of WordClock" width="650">
